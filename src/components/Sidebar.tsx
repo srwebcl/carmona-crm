@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Ticket, Plus, Users, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 import { logoutAction } from '@/actions/auth';
+import { Logo } from '@/components/Logo';
 import type { User } from '@prisma/client';
 
 const NAV_ITEMS = [
@@ -20,9 +21,7 @@ export function Sidebar({ currentUser }: { currentUser: User }) {
     return (
         <div className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-20 transition-all duration-300">
             <div className="p-6 flex items-center justify-center border-b border-slate-800">
-                <h1 className="text-2xl font-bold tracking-widest text-indigo-400">
-                    CARMONA<span className="text-white"> CRM</span>
-                </h1>
+                <Logo width={170} />
             </div>
 
             <nav className="flex-1 px-4 py-6 space-y-2">

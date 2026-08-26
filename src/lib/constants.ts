@@ -3,8 +3,10 @@
 // migraciones, igual que en el prototipo original (ver antiguo src/data.ts).
 
 export const BRANDS = [
-    'Toyota', 'Nissan', 'Ford', 'Chevrolet', 'Kia',
-    'Hyundai', 'Peugeot', 'Suzuki', 'Mazda', 'Honda',
+    'Audi', 'BMW', 'BMW Motorrad', 'CUPRA', 'Dongfeng', 'Foton', 'Geely',
+    'Honda', 'Jetour', 'Kaiyi', 'Karry', 'Maxus', 'MG', 'MINI', 'SEAT',
+    'Soueast', 'Toyota', 'Volkswagen', 'Volvo',
+    'Foton Camiones', 'Iveco', 'MAN', 'VW Camiones',
 ] as const;
 
 export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos'] as const;

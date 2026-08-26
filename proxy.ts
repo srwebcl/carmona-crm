@@ -8,13 +8,19 @@ import { jwtVerify } from 'jose';
 // Rutas públicas: portal de ingreso de reclamos (requisito 2), login y salud.
 const PUBLIC_PREFIXES = ['/login', '/reclamo', '/api/health'];
 
+// Assets estáticos de public/ (logo, íconos): son de marca, no datos de
+// clientes, así que no tiene sentido exigirles sesión — y si se les exige
+// por error, el navegador intenta renderizar la página HTML de /login como
+// si fuera la imagen/ícono (roto, o "Unexpected token '<'" si es JS/CSS).
+const PUBLIC_STATIC_FILES = ['/favicon.svg', '/icons.svg', '/logo-carmona.avif'];
+
 function isPublicPath(pathname: string) {
-    // Los assets internos de Next (JS/CSS/fuentes) nunca deben pasar por el
-    // chequeo de sesión — el `matcher` de abajo ya debería excluirlos, pero
-    // se repite aquí como segunda barrera: si esto fallara, un asset
-    // redirigido a /login (HTML) rompe la carga de la página con errores
-    // "Unexpected token '<'" al intentar ejecutarlo como JS/CSS.
+    // El `matcher` de abajo ya debería excluir los assets internos de Next
+    // y los estáticos listados arriba, pero se repite aquí como segunda
+    // barrera — confirmado en pruebas que confiar solo en el matcher no es
+    // suficiente (ver historial de este archivo).
     if (pathname.startsWith('/_next/')) return true;
+    if (PUBLIC_STATIC_FILES.includes(pathname)) return true;
 
     return PUBLIC_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }

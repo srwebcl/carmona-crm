@@ -14,7 +14,7 @@ const USERS = [
     { name: 'Juanito Perez', email: 'juanito.perez@carmona.cl', role: 'Jefe Postventa', brands: ['Toyota'], areas: ['Servicio Técnico', 'Repuestos'] },
     { name: 'Juanita Contreras', email: 'juanita.contreras@carmona.cl', role: 'Jefe Ventas', brands: ['Toyota'], areas: ['Ventas'] },
     { name: 'Pepito', email: 'pepito@carmona.cl', role: 'Encargado Repuestos', brands: ['Todas'], areas: ['Repuestos'] },
-    { name: 'Carlos Gomez', email: 'carlos.gomez@carmona.cl', role: 'Jefe Postventa', brands: ['Nissan', 'Ford'], areas: ['Servicio Técnico'] },
+    { name: 'Carlos Gomez', email: 'carlos.gomez@carmona.cl', role: 'Jefe Postventa', brands: ['Volkswagen', 'Volvo'], areas: ['Servicio Técnico'] },
 ];
 
 async function main() {
@@ -63,8 +63,8 @@ async function main() {
                 customerName: 'Pedro Soto',
                 email: 'pedro.s@ejemplo.cl',
                 phone: '+569 8765 4321',
-                brand: 'Nissan',
-                vehicleModel: 'Versa',
+                brand: 'Volkswagen',
+                vehicleModel: 'Polo',
                 plate: 'XY1122',
                 eventDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
                 area: 'Ventas',

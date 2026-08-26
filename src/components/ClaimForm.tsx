@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from 'react';
 import { Plus, Paperclip } from 'lucide-react';
 import { BRANDS, AREAS, CHANNELS } from '@/lib/constants';
+import { Logo } from '@/components/Logo';
 import type { ClaimFormState } from '@/actions/claims';
 
 type ClaimAction = (prevState: ClaimFormState, formData: FormData) => Promise<ClaimFormState>;
@@ -26,9 +27,13 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
     return (
         <div className="max-w-3xl mx-auto space-y-8">
             <div className="text-center mt-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-6 transform rotate-3">
-                    <Plus size={32} className="text-white" />
-                </div>
+                {isManual ? (
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-6 transform rotate-3">
+                        <Plus size={32} className="text-white" />
+                    </div>
+                ) : (
+                    <Logo width={200} dark className="mb-6" />
+                )}
                 <h2 className="text-3xl font-extrabold text-slate-800">{title}</h2>
                 <p className="text-slate-500 mt-3 max-w-xl mx-auto leading-relaxed">{subtitle}</p>
             </div>

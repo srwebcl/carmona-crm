@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CheckCircle } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 export default async function ClaimConfirmationPage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
     const { code } = await searchParams;
@@ -7,6 +8,7 @@ export default async function ClaimConfirmationPage({ searchParams }: { searchPa
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
             <div className="glass-card max-w-md w-full p-10 text-center border-t-4 border-t-emerald-500">
+                <Logo width={150} dark className="mb-6 mx-auto" />
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-600 mx-auto">
                     <CheckCircle size={32} />
                 </div>

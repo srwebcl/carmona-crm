@@ -1,8 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
-import { LogIn } from 'lucide-react';
 import { loginAction, type LoginState } from '@/actions/auth';
+import { Logo } from '@/components/Logo';
 
 const initialState: LoginState = {};
 
@@ -12,10 +12,8 @@ export function LoginForm({ next }: { next?: string }) {
     return (
         <form action={formAction} className="glass-card w-full max-w-sm p-8 border-t-4 border-t-indigo-500 space-y-5">
             <div className="text-center mb-2">
-                <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/30 mb-4">
-                    <LogIn size={26} className="text-white" />
-                </div>
-                <h1 className="text-2xl font-extrabold text-slate-800">CARMONA CRM</h1>
+                <Logo width={180} dark className="mb-4" />
+                <h1 className="text-2xl font-extrabold text-slate-800">Portal de Gestión</h1>
                 <p className="text-slate-500 text-sm mt-1">Ingresa con tu correo corporativo</p>
             </div>
 
