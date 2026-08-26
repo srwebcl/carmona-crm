@@ -1,35 +1,15 @@
 import { Suspense } from 'react';
-import type { Prisma } from '@prisma/client';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { isGerenciaRole } from '@/lib/constants';
+import { buildClaimsWhere, type ClaimsFilterParams } from '@/lib/claimsFilter';
 import { ClaimsSearchBar } from '@/components/ClaimsSearchBar';
 import { ClaimsTable } from '@/components/ClaimsTable';
 
-interface SearchParams {
-    q?: string;
-    brand?: string;
-    from?: string;
-    to?: string;
-}
-
-export default async function ReclamosPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function ReclamosPage({ searchParams }: { searchParams: Promise<ClaimsFilterParams> }) {
     const currentUser = await requireUser();
-    const { q, brand, from, to } = await searchParams;
-
-    const where: Prisma.ClaimWhereInput = {
-        ...(isGerenciaRole(currentUser.role) ? {} : { assignedToId: currentUser.id }),
-        ...(brand ? { brand } : {}),
-        ...(q ? { OR: [{ customerName: { contains: q } }, { code: { contains: q } }] } : {}),
-        ...(from || to
-            ? {
-                createdAt: {
-                    ...(from ? { gte: new Date(`${from}T00:00:00`) } : {}),
-                    ...(to ? { lte: new Date(`${to}T23:59:59`) } : {}),
-                },
-            }
-            : {}),
-    };
+    const filters = await searchParams;
+    const where = buildClaimsWhere(currentUser, filters);
 
     const claims = await prisma.claim.findMany({
         where,

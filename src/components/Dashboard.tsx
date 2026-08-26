@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Ticket, Clock, AlertTriangle, CheckCircle, Download } from 'lucide-react';
 
 interface DashboardProps {
@@ -7,22 +8,33 @@ interface DashboardProps {
     vencidos: number;
     topBrands: [string, number][];
     topAreas: [string, number][];
+    exportHref: string;
+    isFiltered: boolean;
+    searchBar: ReactNode;
 }
 
-export function Dashboard({ total, abiertos, resueltos, vencidos, topBrands, topAreas }: DashboardProps) {
+export function Dashboard({ total, abiertos, resueltos, vencidos, topBrands, topAreas, exportHref, isFiltered, searchBar }: DashboardProps) {
     return (
         <div className="space-y-8">
-            <div className="flex items-end justify-between flex-wrap gap-4">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control</h2>
-                    <p className="text-slate-500 mt-1">Resumen del estado actual de los reclamos y métricas clave.</p>
+                    <p className="text-slate-500 mt-1">
+                        {isFiltered
+                            ? 'Métricas y descarga acotadas al filtro activo.'
+                            : 'Resumen del estado actual de los reclamos y métricas clave.'}
+                    </p>
                 </div>
-                <a
-                    href="/api/export/claims"
-                    className="flex items-center px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-medium text-sm shadow-sm"
-                >
-                    <Download size={16} className="mr-2" /> Descargar base (CSV)
-                </a>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    {searchBar}
+                    <a
+                        href={exportHref}
+                        className="flex items-center px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-medium text-sm shadow-sm shrink-0"
+                    >
+                        <Download size={16} className="mr-2" />
+                        {isFiltered ? 'Descargar filtrado (CSV)' : 'Descargar base completa (CSV)'}
+                    </a>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">

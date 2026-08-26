@@ -1,15 +1,19 @@
+import { Suspense } from 'react';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isGerenciaRole, CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from '@/lib/constants';
+import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from '@/lib/constants';
 import { businessDaysBetween } from '@/lib/businessDays';
+import { buildClaimsWhere, buildClaimsQueryString, type ClaimsFilterParams } from '@/lib/claimsFilter';
 import { Dashboard } from '@/components/Dashboard';
+import { ClaimsSearchBar } from '@/components/ClaimsSearchBar';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<ClaimsFilterParams> }) {
     const currentUser = await requireUser();
-    const scoped = isGerenciaRole(currentUser.role) ? {} : { assignedToId: currentUser.id };
+    const filters = await searchParams;
+    const where = buildClaimsWhere(currentUser, filters);
 
     const claims = await prisma.claim.findMany({
-        where: scoped,
+        where,
         include: { history: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });
 
@@ -32,5 +36,25 @@ export default async function DashboardPage() {
     const topBrands = [...byBrand.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
     const topAreas = [...byArea.entries()].sort((a, b) => b[1] - a[1]);
 
-    return <Dashboard total={total} abiertos={abiertos} resueltos={resueltos} vencidos={vencidos} topBrands={topBrands} topAreas={topAreas} />;
+    const qs = buildClaimsQueryString(filters);
+    const isFiltered = qs.length > 0;
+    const exportHref = `/api/export/claims${isFiltered ? `?${qs}` : ''}`;
+
+    return (
+        <Dashboard
+            total={total}
+            abiertos={abiertos}
+            resueltos={resueltos}
+            vencidos={vencidos}
+            topBrands={topBrands}
+            topAreas={topAreas}
+            exportHref={exportHref}
+            isFiltered={isFiltered}
+            searchBar={
+                <Suspense fallback={null}>
+                    <ClaimsSearchBar />
+                </Suspense>
+            }
+        />
+    );
 }
