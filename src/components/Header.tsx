@@ -1,10 +1,9 @@
-import { Bell, LogOut } from 'lucide-react';
-import { useCrm } from '../context/CrmContext';
+import { Bell } from 'lucide-react';
 import clsx from 'clsx';
+import type { User } from '@prisma/client';
+import type { Notification } from '@/lib/notifications';
 
-export function Header() {
-    const { currentUser, notifications } = useCrm();
-
+export function Header({ currentUser, notifications }: { currentUser: User; notifications: Notification[] }) {
     return (
         <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-8 shrink-0 sticky top-0 z-10 shadow-sm">
             <div>
@@ -18,7 +17,6 @@ export function Header() {
             </div>
 
             <div className="flex items-center space-x-6">
-                {/* Notificaciones */}
                 <div className="relative cursor-pointer group">
                     <div className="p-2.5 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors border border-slate-200 shadow-sm">
                         <Bell size={20} className="text-slate-600" />
@@ -28,8 +26,7 @@ export function Header() {
                             {notifications.length}
                         </span>
                     )}
-                    
-                    {/* Tooltip Notificaciones */}
+
                     <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-2xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top-right scale-95 group-hover:scale-100 z-50">
                         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 rounded-t-xl">
                             <span className="text-sm font-bold text-slate-800">Notificaciones Recientes</span>
@@ -41,12 +38,12 @@ export function Header() {
                                     <Bell size={24} className="text-slate-300 mb-2" />
                                     No tienes notificaciones pendientes.
                                 </div>
-                            ) : notifications.map((n, i) => (
-                                <div key={i} className={clsx(
-                                    "p-4 text-sm border-b last:border-b-0 transition-colors flex items-start",
-                                    n.urgent ? 'bg-red-50/50 hover:bg-red-50' : 'hover:bg-slate-50'
+                            ) : notifications.map((n) => (
+                                <div key={n.id} className={clsx(
+                                    'p-4 text-sm border-b last:border-b-0 transition-colors flex items-start',
+                                    n.urgent ? 'bg-red-50/50 hover:bg-red-50' : 'hover:bg-slate-50',
                                 )}>
-                                    <div className={clsx("w-2 h-2 rounded-full mt-1.5 mr-3 shrink-0", n.urgent ? 'bg-red-500 animate-pulse' : 'bg-indigo-500')}></div>
+                                    <div className={clsx('w-2 h-2 rounded-full mt-1.5 mr-3 shrink-0', n.urgent ? 'bg-red-500 animate-pulse' : 'bg-indigo-500')}></div>
                                     <span className={clsx(n.urgent ? 'text-red-800 font-medium' : 'text-slate-700')}>{n.text}</span>
                                 </div>
                             ))}
@@ -56,16 +53,14 @@ export function Header() {
 
                 <div className="h-8 w-px bg-slate-200"></div>
 
-                {/* Perfil */}
-                <div className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity">
+                <div className="flex items-center space-x-3">
                     <div className="text-right hidden md:block">
                         <p className="text-sm font-bold text-slate-800">{currentUser.name}</p>
-                        <p className="text-xs text-slate-500">{currentUser.role}</p>
+                        <p className="text-xs text-slate-500">{currentUser.email}</p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
                         {currentUser.name.charAt(0)}
                     </div>
-                    <LogOut size={18} className="text-slate-400 ml-2 hover:text-red-500 transition-colors" />
                 </div>
             </div>
         </header>

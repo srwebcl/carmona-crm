@@ -1,0 +1,130 @@
+// Schema de base de datos del CRM de Reclamos Carmona.
+//
+// El motor real (MySQL o PostgreSQL) depende de lo que provea la cuenta de
+// Cloudways — confirmar en su panel y ajustar `provider` abajo. La URL de
+// conexión ya NO va aquí (cambio de Prisma 7): se define en
+// prisma.config.ts + DATABASE_URL (ver .env.example). El schema evita a
+// propósito features exclusivas de un motor (arrays nativos, enums nativos)
+// para que el cambio entre "mysql" y "postgresql" sea solo la línea de abajo.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // cambiar a "postgresql" si Cloudways provee Postgres
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  // Listas de marcas/áreas que administra este usuario para el enrutamiento
+  // automático. ["Todas"] = sin restricción.
+  brands       Json
+  areas        Json
+  createdAt    DateTime @default(now())
+
+  assignedClaims Claim[]        @relation("AssignedClaims")
+  historyEntries ClaimHistory[]
+
+  @@map("users")
+}
+
+model Claim {
+  id   Int    @id @default(autoincrement())
+  // Número de reclamo autogenerado y visible al cliente/equipo, ej. REC-1001
+  code String @unique
+
+  // Datos mínimos del cliente y del caso
+  customerName     String
+  email            String
+  phone            String
+  brand            String
+  vehicleModel     String
+  plate            String
+  eventDate        DateTime // fecha de compra o de visita al servicio técnico
+  area             String
+  description      String   @db.Text
+  expectedSolution String   @db.Text
+
+  // Canal de ingreso: WEB | PHONE | IN_PERSON | SOCIAL | EMAIL | OTHER
+  channel String
+
+  // Estado de gestión: NUEVO | EN_REVISION | ESPERANDO_CLIENTE | RESUELTO | CERRADO
+  status String @default("NUEVO")
+
+  // Clasificación de la respuesta final, solo se define al resolver/cerrar:
+  // SE_ACOGE | NO_SE_ACOGE | PARCIAL | OTRA_SOLUCION
+  resolutionType String?
+
+  assignedToId Int
+  assignedTo   User @relation("AssignedClaims", fields: [assignedToId], references: [id])
+
+  createdAt DateTime  @default(now())
+  closedAt  DateTime?
+
+  history     ClaimHistory[]
+  attachments Attachment[]
+  alertLogs   AlertLog[]
+
+  @@index([status])
+  @@index([brand])
+  @@index([assignedToId])
+  @@map("claims")
+}
+
+model ClaimHistory {
+  id      Int   @id @default(autoincrement())
+  claim   Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claimId Int
+
+  // Usuario que generó la entrada; null = acción automática del sistema.
+  user       User?  @relation(fields: [userId], references: [id])
+  userId     Int?
+  // Nombre a mostrar, guardado también como copia plana para que el
+  // historial no dependa de que el usuario siga existiendo.
+  authorName String
+
+  // NOTA | LLAMADA | REUNION | EMAIL | CREACION | CAMBIO_ESTADO | ASIGNACION | ALERTA_ENVIADA
+  type String
+  text String @db.Text
+
+  createdAt DateTime @default(now())
+
+  attachments Attachment[]
+
+  @@index([claimId])
+  @@map("claim_history")
+}
+
+model Attachment {
+  id      Int   @id @default(autoincrement())
+  claim   Claim @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claimId Int
+
+  history   ClaimHistory? @relation(fields: [historyId], references: [id], onDelete: Cascade)
+  historyId Int?
+
+  filename String
+  path     String // ruta pública relativa, ej. /uploads/12/archivo.pdf
+  size     Int
+  mimeType String
+
+  uploadedAt DateTime @default(now())
+
+  @@map("attachments")
+}
+
+// Evita reenviar la misma alerta de SLA más de una vez por día para un reclamo.
+model AlertLog {
+  id            Int      @id @default(autoincrement())
+  claim         Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claimId       Int
+  thresholdDays Int
+  sentAt        DateTime @default(now())
+
+  @@index([claimId, sentAt])
+  @@map("alert_logs")
+}
