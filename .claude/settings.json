@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm i *)",
+      "Bash(vercel blob *)",
+      "Bash(vercel env *)",
+      "Bash(npm install *)"
+    ]
+  }
+}

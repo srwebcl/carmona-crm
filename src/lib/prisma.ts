@@ -1,6 +1,14 @@
 import 'server-only';
 import { PrismaClient } from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
+import { neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
+
+// El driver serverless de Neon usa WebSocket para transacciones; en
+// runtime Node.js (self-hosted o funciones de Vercel, a diferencia del
+// runtime "edge") hay que darle un constructor de WebSocket explícito, si
+// no las transacciones fallan con "fetch failed" al abrir el socket.
+neonConfig.webSocketConstructor = ws;
 
 // Prisma 7 requiere pasar explícitamente un "driver adapter" — ya no basta
 // con `url` en el datasource del schema. Este adapter es para Postgres/Neon

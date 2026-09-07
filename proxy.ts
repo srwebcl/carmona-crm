@@ -5,8 +5,11 @@ import { jwtVerify } from 'jose';
 // Nota: en Next.js 16 el proxy (ex-middleware) siempre corre en runtime
 // Node.js — no hace falta (ni se permite) declarar `runtime` aquí.
 
-// Rutas públicas: portal de ingreso de reclamos (requisito 2), login y salud.
-const PUBLIC_PREFIXES = ['/login', '/reclamo', '/api/health'];
+// Rutas públicas: portal de ingreso de reclamos (requisito 2), login, salud
+// y el cron de Vercel (app/api/cron/sla-check/route.ts) — ese último no usa
+// cookie de sesión, se autentica solo con el header Authorization/CRON_SECRET,
+// así que exigirle sesión acá lo dejaría inalcanzable para Vercel Cron.
+const PUBLIC_PREFIXES = ['/login', '/reclamo', '/api/health', '/api/cron'];
 
 // Assets estáticos de public/ (logo, íconos): son de marca, no datos de
 // clientes, así que no tiene sentido exigirles sesión — y si se les exige

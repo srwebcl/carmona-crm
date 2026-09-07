@@ -3,7 +3,13 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
+import { neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
 import bcrypt from 'bcryptjs';
+
+// Ver nota en src/lib/prisma.ts: necesario en Node.js para que funcionen
+// las transacciones del driver serverless de Neon.
+neonConfig.webSocketConstructor = ws;
 
 const prisma = new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL! }) });
 
