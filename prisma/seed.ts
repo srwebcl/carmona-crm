@@ -2,10 +2,10 @@
 // Ejecutar con: npm run db:seed
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaNeon } from '@prisma/adapter-neon';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient({ adapter: new PrismaMariaDb(process.env.DATABASE_URL!) });
+const prisma = new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL! }) });
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD ?? '1234'; // cambiar tras el primer login
 

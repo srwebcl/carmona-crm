@@ -1,17 +1,20 @@
 // Schema de base de datos del CRM de Reclamos Carmona.
 //
-// El motor real (MySQL o PostgreSQL) depende de lo que provea la cuenta de
-// Cloudways — confirmar en su panel y ajustar `provider` abajo. La URL de
-// conexión ya NO va aquí (cambio de Prisma 7): se define en
-// prisma.config.ts + DATABASE_URL (ver .env.example). El schema evita a
+// Por defecto usa PostgreSQL (Neon vía Vercel Marketplace) — es lo que
+// permite desplegar en Vercel sin fricción. Para autoalojar en Cloudways
+// con MySQL/MariaDB en cambio: cambiar `provider` a "mysql" abajo, y en
+// src/lib/prisma.ts + prisma/seed.ts reemplazar PrismaNeon
+// (@prisma/adapter-neon) por PrismaMariaDb (@prisma/adapter-mariadb) — ver
+// README. La URL de conexión ya NO va aquí (cambio de Prisma 7): se define
+// en prisma.config.ts + DATABASE_URL (ver .env.example). El schema evita a
 // propósito features exclusivas de un motor (arrays nativos, enums nativos)
-// para que el cambio entre "mysql" y "postgresql" sea solo la línea de abajo.
+// para que ese cambio de motor sea solo estas dos líneas.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql" // cambiar a "postgresql" si Cloudways provee Postgres
+  provider = "postgresql" // cambiar a "mysql" para autoalojar en Cloudways
 }
 
 model User {

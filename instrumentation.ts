@@ -1,10 +1,16 @@
 // Next.js invoca `register()` una sola vez al levantar el servidor (dev y
 // prod). Se usa para arrancar el cron de alertas de SLA sin depender de
-// Vercel Cron (no aplica en un despliegue self-hosted como Cloudways).
+// Vercel Cron — pero solo tiene sentido en un despliegue self-hosted
+// (Cloudways) con proceso Node persistente. En Vercel las alertas las
+// dispara app/api/cron/sla-check/route.ts vía Vercel Cron (ver vercel.json).
 export async function register() {
     // Este hook corre también en el runtime "edge"; node-cron y Prisma
     // requieren Node.js, así que se ejecuta solo ahí.
     if (process.env.NEXT_RUNTIME !== 'nodejs') return;
+
+    // Vercel siempre define esta env var — sin proceso persistente, un
+    // scheduler in-process no sobrevive entre invocaciones.
+    if (process.env.VERCEL) return;
 
     const globalForCron = globalThis as unknown as { __slaCronStarted?: boolean };
     if (globalForCron.__slaCronStarted) return;

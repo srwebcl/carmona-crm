@@ -18,7 +18,11 @@ export function buildClaimsWhere(currentUser: User, { q, brand, from, to }: Clai
     return {
         ...(isGerenciaRole(currentUser.role) ? {} : { assignedToId: currentUser.id }),
         ...(brand ? { brand } : {}),
-        ...(q ? { OR: [{ customerName: { contains: q } }, { code: { contains: q } }] } : {}),
+        // `mode: 'insensitive'` es soportado por PostgreSQL (motor por
+        // defecto acá) pero no por MySQL — si se vuelve a MySQL/Cloudways
+        // (ver prisma/schema.prisma), quitar esta opción; su collation por
+        // defecto ya suele ser insensible a mayúsculas.
+        ...(q ? { OR: [{ customerName: { contains: q, mode: 'insensitive' } }, { code: { contains: q, mode: 'insensitive' } }] } : {}),
         ...(from || to
             ? {
                 createdAt: {

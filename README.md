@@ -2,12 +2,12 @@
 
 Plataforma para centralizar, asignar y hacer seguimiento a los reclamos de clientes de Carmona (ingresados desde la web pública, por teléfono, presencial, etc.), con alertas automáticas de SLA y exportación de datos.
 
-Stack: **Next.js 16** (App Router) + **TypeScript** + **Prisma** (MySQL/MariaDB) + **Tailwind CSS 4**. Pensado para autoalojarse en un servidor propio (Cloudways) — no depende de Vercel.
+Stack: **Next.js 16** (App Router) + **TypeScript** + **Prisma** (PostgreSQL/Neon por defecto) + **Tailwind CSS 4**. Funciona tanto en **Vercel** (revisión rápida, este es el camino por defecto del repo) como autoalojado en un servidor propio como Cloudways (ver [Despliegue en Cloudways](#despliegue-en-cloudways-alternativa-self-hosted)).
 
 ## Requisitos
 
 - Node.js `^20.19 || ^22.12 || >=24.0`
-- Una base de datos MySQL/MariaDB accesible (o PostgreSQL, ver más abajo)
+- Una base de datos PostgreSQL accesible (Neon, o MySQL/MariaDB si se autoaloja — ver más abajo)
 
 ## Desarrollo local
 
@@ -28,12 +28,12 @@ Stack: **Next.js 16** (App Router) + **TypeScript** + **Prisma** (MySQL/MariaDB)
    ```
    App en `http://localhost:3000`. Portal público de reclamos en `/reclamo` (sin login).
 
-## Motor de base de datos: MySQL o PostgreSQL
+## Motor de base de datos: PostgreSQL o MySQL
 
-El schema (`prisma/schema.prisma`) usa `provider = "mysql"` por defecto (lo más común en Cloudways). Si la cuenta termina siendo Postgres:
+El schema (`prisma/schema.prisma`) usa `provider = "postgresql"` por defecto — es lo que permite desplegar en Vercel sin fricción (Neon vía Marketplace). Para autoalojar en Cloudways con MySQL/MariaDB en cambio:
 
-1. Cambiar `provider = "postgresql"` en `prisma/schema.prisma`.
-2. Reemplazar el paquete `@prisma/adapter-mariadb` por `@prisma/adapter-pg`, y en [src/lib/prisma.ts](src/lib/prisma.ts) y [prisma/seed.ts](prisma/seed.ts) cambiar `PrismaMariaDb` por `PrismaPg` (mismo patrón, ver la doc de cada adapter).
+1. Cambiar `provider = "mysql"` en `prisma/schema.prisma`.
+2. Cambiar el paquete `@prisma/adapter-neon` por `@prisma/adapter-mariadb`, y en [src/lib/prisma.ts](src/lib/prisma.ts) y [prisma/seed.ts](prisma/seed.ts) cambiar `PrismaNeon` por `PrismaMariaDb` (mismo patrón: `new PrismaMariaDb(process.env.DATABASE_URL!)`).
 3. Correr `npm run db:migrate` de nuevo.
 
 ## Scripts
@@ -49,10 +49,23 @@ El schema (`prisma/schema.prisma`) usa `provider = "mysql"` por defecto (lo más
 | `npm run db:studio` | Abre Prisma Studio para inspeccionar la base de datos |
 | `npm run lint` | Lint con oxlint |
 
-## Despliegue en Cloudways
+## Despliegue en Vercel (por defecto)
+
+Pensado para revisión rápida y también apto para producción liviana. Requiere tres piezas, todas provisionables desde el propio proyecto de Vercel:
+
+1. **Base de datos**: Marketplace → Neon Postgres (`vercel integration add neon`). Provisiona `DATABASE_URL` automáticamente.
+2. **Adjuntos**: `vercel blob store add` — provisiona `BLOB_READ_WRITE_TOKEN`. Con esa variable presente, [src/lib/uploads.ts](src/lib/uploads.ts) guarda los archivos ahí en vez de disco (en Vercel no hay disco persistente). Nota: los adjuntos quedan en una URL pública no adivinable, pero — a diferencia de la ruta propia `/uploads/[...path]` usada al autoalojar — no exigen sesión para abrirse.
+3. **Variables propias** (`vercel env add <nombre> production`): `SESSION_SECRET`, `CRON_SECRET` (para `/api/cron/sla-check`, ver abajo), `SLA_BUSINESS_DAYS`, `APP_URL` (la URL del deployment). SMTP es opcional — sin `SMTP_HOST` el mailer solo deja log, no rompe nada.
+4. Migrar y sembrar contra la BD de Vercel: `vercel env pull` (trae las env vars reales a `.env.local`) y luego `npm run db:migrate:deploy` + `npm run db:seed`.
+5. Alertas de SLA: `vercel.json` define un cron (`0 12 * * 1-5`, ~9am Chile) que llama a `app/api/cron/sla-check/route.ts` — reemplaza al `node-cron` de `instrumentation.ts` (que se desactiva solo en Vercel, no hay proceso persistente donde correr un scheduler in-process).
+6. Deploy: `vercel --prod`, o simplemente hacer push a `main` una vez conectado el repo de GitHub al proyecto (`vercel git connect`).
+
+## Despliegue en Cloudways (alternativa self-hosted)
+
+Requiere primero volver el schema a MySQL (ver [arriba](#motor-de-base-de-datos-postgresql-o-mysql)) si la cuenta no tiene Postgres.
 
 1. En el servidor: Node.js app + base de datos MySQL/Postgres provisionadas.
-2. Variables de entorno: las de `.env.example`, con `DATABASE_URL` apuntando a la BD de Cloudways, `SESSION_SECRET` único y largo, credenciales SMTP reales, y **`UPLOADS_DIR` como ruta absoluta persistente fuera de la carpeta del proyecto/build** (importante: el servidor `standalone` hace `chdir()` a `.next/standalone/` al arrancar, así que no puede depender de rutas relativas al cwd).
+2. Variables de entorno: las de `.env.example`, con `DATABASE_URL` apuntando a la BD de Cloudways, `SESSION_SECRET` único y largo, credenciales SMTP reales, y **`UPLOADS_DIR` como ruta absoluta persistente fuera de la carpeta del proyecto/build** (importante: el servidor `standalone` hace `chdir()` a `.next/standalone/` al arrancar, así que no puede depender de rutas relativas al cwd). Sin `BLOB_READ_WRITE_TOKEN`, los adjuntos usan automáticamente esta ruta en disco (ver [src/lib/uploads.ts](src/lib/uploads.ts)).
 3. Build y arranque:
    ```bash
    npm run build
