@@ -1,6 +1,6 @@
 import 'server-only';
 import type { Prisma, User } from '@prisma/client';
-import { isGerenciaRole } from './constants';
+import { isGerenciaRole, STATUSES } from './constants';
 
 /**
  * Filtros de búsqueda compartidos entre el listado de reclamos, el Dashboard
@@ -52,11 +52,34 @@ export function buildClaimsWhere(currentUser: User, { q, brand, area, assignedTo
     // ClaimsSearchBar) — para el resto su propia visibilidad ya viene acotada.
     if (assignedToId && isGerenciaRole(currentUser.role)) conditions.push({ assignedToId: Number(assignedToId) });
     if (q) {
+        // Busca por cualquiera de las columnas visibles en la tabla de
+        // tickets (ID, cliente, vehículo/área, sucursal, estado,
+        // responsable), no solo nombre/código. El estado se busca por su
+        // etiqueta (ej. "en revisión"), no por el valor interno guardado.
+        //
         // `mode: 'insensitive'` es soportado por PostgreSQL (motor por
         // defecto acá) pero no por MySQL — si se vuelve a MySQL/Cloudways
         // (ver prisma/schema.prisma), quitar esta opción; su collation por
         // defecto ya suele ser insensible a mayúsculas.
-        conditions.push({ OR: [{ customerName: { contains: q, mode: 'insensitive' } }, { code: { contains: q, mode: 'insensitive' } }] });
+        const insensitiveContains = { contains: q, mode: 'insensitive' as const };
+        const matchingStatuses = STATUSES.filter((s) => s.label.toLowerCase().includes(q.toLowerCase())).map((s) => s.value);
+
+        conditions.push({
+            OR: [
+                { code: insensitiveContains },
+                { customerName: insensitiveContains },
+                { email: insensitiveContains },
+                { phone: insensitiveContains },
+                { rut: insensitiveContains },
+                { brand: insensitiveContains },
+                { vehicleModel: insensitiveContains },
+                { plate: insensitiveContains },
+                { area: insensitiveContains },
+                { branch: insensitiveContains },
+                { assignedTo: { name: insensitiveContains } },
+                ...(matchingStatuses.length > 0 ? [{ status: { in: matchingStatuses } }] : []),
+            ],
+        });
     }
     if (from || to) {
         conditions.push({

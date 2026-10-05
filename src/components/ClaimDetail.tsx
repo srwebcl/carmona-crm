@@ -1,7 +1,8 @@
 'use client';
 
-import { useActionState, useRef, useState, useEffect, useTransition } from 'react';
-import { Send, User as UserIcon, Calendar, Phone, Mail, Car, MapPin, Tag, Paperclip, FileText, Clock, IdCard, Building2, CheckCircle2 } from 'lucide-react';
+import { useActionState, useRef, useState, useEffect, useTransition, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { Send, User as UserIcon, Calendar, Phone, Mail, Car, MapPin, Tag, Paperclip, FileText, Clock, IdCard, Building2, CheckCircle2, Pencil, X } from 'lucide-react';
 import clsx from 'clsx';
 import type { Attachment, Claim, ClaimHistory, User } from '@prisma/client';
 import { addHistoryEntry, changeClaimStatus, reassignClaim, type ClaimFormState } from '@/actions/claims';
@@ -30,6 +31,7 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [pendingStatus, setPendingStatus] = useState(claim.status);
+    const [showResolutionModal, setShowResolutionModal] = useState(false);
     const [historyState, historyAction, historyPending] = useActionState(addHistoryEntry.bind(null, claim.id), initialState);
     const [statusState, statusAction, statusPending] = useActionState(changeClaimStatus.bind(null, claim.id), initialState);
     const [, startReassignTransition] = useTransition();
@@ -42,7 +44,27 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
         if (historyState.success) noteFormRef.current?.reset();
     }, [historyState.success]);
 
+    useEffect(() => {
+        if (statusState.success) setShowResolutionModal(false);
+    }, [statusState.success]);
+
     const needsResolution = CLOSED_STATUSES.includes(pendingStatus as 'RESUELTO' | 'CERRADO');
+
+    function handleStatusChange(e: ChangeEvent<HTMLSelectElement>) {
+        const next = e.target.value;
+        setPendingStatus(next);
+        setShowResolutionModal(CLOSED_STATUSES.includes(next as 'RESUELTO' | 'CERRADO'));
+    }
+
+    function closeResolutionModal() {
+        setShowResolutionModal(false);
+        // Si el cierre se cancela y el reclamo todavía no estaba resuelto/cerrado
+        // de antes, se vuelve al estado real para no dejar el selector mostrando
+        // un cambio que nunca se guardó.
+        if (!CLOSED_STATUSES.includes(claim.status as 'RESUELTO' | 'CERRADO')) {
+            setPendingStatus(claim.status);
+        }
+    }
 
     // Documentos del Caso (punto 7): se juntan los de la creación y los de
     // cada entrada de la bitácora en una sola lista ordenada por fecha, cada
@@ -74,40 +96,88 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                     </p>
                 </div>
 
-                <form action={statusAction} className="flex flex-col items-end gap-2 bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <form id="claim-status-form" action={statusAction} className="flex flex-col items-end gap-2 bg-white p-3 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex flex-wrap items-center justify-end gap-3">
                         <label className="text-sm font-bold text-slate-700">Estado:</label>
                         <select
                             name="status"
                             value={pendingStatus}
-                            onChange={(e) => setPendingStatus(e.target.value)}
+                            onChange={handleStatusChange}
                             className="bg-slate-50 border-slate-200 rounded-lg text-sm font-semibold p-2 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                         >
                             {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                         </select>
-                        {needsResolution && (
-                            <select name="resolutionType" defaultValue={claim.resolutionType ?? ''} required className="bg-slate-50 border-slate-200 rounded-lg text-sm font-semibold p-2 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
-                                <option value="" disabled>Clasificación de respuesta...</option>
-                                {RESOLUTION_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-                            </select>
+                        {needsResolution ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowResolutionModal(true)}
+                                className="flex items-center px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-bold rounded-lg hover:bg-emerald-100 transition-colors"
+                            >
+                                <Pencil size={14} className="mr-1.5" />
+                                {claim.resolutionNotes ? 'Editar Solución' : 'Completar Solución'}
+                            </button>
+                        ) : (
+                            <button type="submit" disabled={statusPending} className="px-3 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors">
+                                Guardar
+                            </button>
                         )}
-                        <button type="submit" disabled={statusPending} className="px-3 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors">
-                            Guardar
-                        </button>
                     </div>
-                    {needsResolution && (
-                        <textarea
-                            name="resolutionNotes"
-                            defaultValue={claim.resolutionNotes ?? ''}
-                            required={!claim.resolutionNotes}
-                            placeholder="Describe la solución definitiva aplicada a este caso..."
-                            rows={2}
-                            className="w-full md:w-96 p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
-                        />
-                    )}
-                    {statusState.error && <p className="text-xs text-red-600 font-medium">{statusState.error}</p>}
+                    {statusState.error && !showResolutionModal && <p className="text-xs text-red-600 font-medium">{statusState.error}</p>}
                 </form>
             </div>
+
+            {showResolutionModal && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4" onClick={closeResolutionModal}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                            <h3 className="text-lg font-bold text-slate-800 flex items-center">
+                                <CheckCircle2 size={20} className="mr-2 text-emerald-500" /> Finalizar Reclamo
+                            </h3>
+                            <button type="button" onClick={closeResolutionModal} className="text-slate-400 hover:text-slate-600">
+                                <X size={22} />
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <p className="text-sm text-slate-500">Registra cómo se resolvió este caso antes de guardar el cambio de estado.</p>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Clasificación de la Respuesta *</label>
+                                <select
+                                    name="resolutionType"
+                                    form="claim-status-form"
+                                    defaultValue={claim.resolutionType ?? ''}
+                                    required
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none"
+                                >
+                                    <option value="" disabled>Selecciona...</option>
+                                    {RESOLUTION_TYPES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Solución Definitiva *</label>
+                                <textarea
+                                    name="resolutionNotes"
+                                    form="claim-status-form"
+                                    defaultValue={claim.resolutionNotes ?? ''}
+                                    required={!claim.resolutionNotes}
+                                    placeholder="Describe la solución definitiva aplicada a este caso..."
+                                    rows={4}
+                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                                />
+                            </div>
+                            {statusState.error && <p className="text-xs text-red-600 font-medium">{statusState.error}</p>}
+                        </div>
+                        <div className="flex justify-end gap-2 p-5 border-t border-slate-100">
+                            <button type="button" onClick={closeResolutionModal} className="px-4 py-2 text-slate-600 font-medium text-sm hover:bg-slate-100 rounded-lg transition-colors">
+                                Cancelar
+                            </button>
+                            <button type="submit" form="claim-status-form" disabled={statusPending} className="px-5 py-2 bg-indigo-600 text-white font-bold text-sm rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors">
+                                {statusPending ? 'Guardando...' : 'Guardar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body,
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="space-y-6">

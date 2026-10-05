@@ -57,8 +57,8 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                         type="text"
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Buscar por nombre o N° de reclamo..."
-                        className="pl-10 pr-4 py-2.5 w-72 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                        placeholder="Buscar por cliente, N°, vehículo, área, sucursal, estado o responsable..."
+                        className="pl-10 pr-4 py-2.5 w-72 lg:w-96 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
                     />
                 </form>
                 <button
