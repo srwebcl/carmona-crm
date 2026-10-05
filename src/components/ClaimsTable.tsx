@@ -75,7 +75,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                                     <td className="p-4 text-sm">
                                         <div className="flex items-center">
                                             <span className="text-slate-600 font-medium">{formatDate(claim.createdAt)}</span>
-                                            {isOverdue && <div title="SLA Vencido"><AlertCircle size={14} className="text-red-500 ml-2" /></div>}
+                                            {isOverdue && <div title="Reclamo atrasado — sin gestión hace días"><AlertCircle size={14} className="text-red-500 ml-2" /></div>}
                                         </div>
                                     </td>
                                     <td className="p-4 pr-6 text-right">

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Ticket, Clock, AlertTriangle, CheckCircle, Download, HelpCircle } from 'lucide-react';
+import { Ticket, Clock, AlertTriangle, CheckCircle, Download } from 'lucide-react';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 interface DashboardProps {
     total: number;
@@ -68,13 +69,8 @@ export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdDays,
                     </div>
                     <div className="z-10">
                         <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                            SLA Vencido
-                            <span className="group/tip relative inline-flex">
-                                <HelpCircle size={13} className="text-slate-400 cursor-help" />
-                                <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 rounded-lg bg-slate-800 px-3 py-2 text-[11px] font-medium normal-case tracking-normal text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100 z-20">
-                                    Reclamos abiertos (no Resueltos/Cerrados) con {thresholdDays} o más días hábiles sin ninguna gestión registrada en la bitácora.
-                                </span>
-                            </span>
+                            Reclamos Atrasados
+                            <InfoTooltip text={`Reclamos abiertos (no Resueltos/Cerrados) con ${thresholdDays} o más días hábiles sin ninguna gestión registrada en la bitácora.`} />
                         </p>
                         <p className="text-3xl font-extrabold text-red-600">{vencidos}</p>
                     </div>

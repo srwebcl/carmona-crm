@@ -30,7 +30,7 @@ export async function getNotifications(currentUser: User): Promise<Notification[
         const lastActionDate = claim.history[0]?.createdAt ?? claim.createdAt;
         const days = businessDaysBetween(lastActionDate, new Date());
         if (days >= thresholdDays) {
-            notifications.push({ id: `${claim.code}-sla`, text: `SLA vencido (≥${thresholdDays} días hábiles) en ${claim.code}`, urgent: true });
+            notifications.push({ id: `${claim.code}-sla`, text: `Reclamo atrasado (≥${thresholdDays} días hábiles sin gestión) en ${claim.code}`, urgent: true });
         }
     }
     return notifications;

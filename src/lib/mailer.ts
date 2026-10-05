@@ -37,7 +37,7 @@ export async function sendMail(opts: { to: string; subject: string; html: string
 
 export function slaAlertEmail(params: { code: string; customerName: string; daysWithoutManagement: number; url: string }) {
     return {
-        subject: `⚠️ SLA vencido — Reclamo ${params.code} sin gestión hace ${params.daysWithoutManagement} días hábiles`,
+        subject: `⚠️ Reclamo atrasado — ${params.code} sin gestión hace ${params.daysWithoutManagement} días hábiles`,
         html: `
             <p>El reclamo <strong>${params.code}</strong> del cliente <strong>${params.customerName}</strong>
             lleva <strong>${params.daysWithoutManagement} días hábiles</strong> sin ninguna gestión registrada.</p>
