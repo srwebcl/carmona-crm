@@ -4,31 +4,52 @@ import { useActionState, useState } from 'react';
 import { Shield, Plus, X } from 'lucide-react';
 import type { User } from '@prisma/client';
 import { createUserAction, type UserFormState } from '@/actions/users';
-import { BRANDS, AREAS } from '@/lib/constants';
+import { BRANDS, AREAS, BRANCHES } from '@/lib/constants';
 
 const initialState: UserFormState = {};
+
+/** Togglea un valor dentro de una lista de selección múltiple con comodín "Todas" (usado por marcas/áreas/sucursales). */
+function toggleValue(list: string[], value: string): string[] {
+    if (value === 'Todas') return ['Todas'];
+    const rest = list.filter((v) => v !== 'Todas');
+    return rest.includes(value) ? rest.filter((v) => v !== value) : [...rest, value];
+}
+
+interface ToggleGroupProps {
+    label: string;
+    name: string;
+    options: readonly string[];
+    selected: string[];
+    onToggle: (value: string) => void;
+    activeClassName: string;
+    selectedClassName: string;
+}
+
+function ToggleGroup({ label, name, options, selected, onToggle, activeClassName, selectedClassName }: ToggleGroupProps) {
+    return (
+        <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{label}</label>
+            <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => onToggle('Todas')} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${selected.includes('Todas') ? activeClassName : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
+                    Todas
+                </button>
+                {options.map((opt) => (
+                    <button type="button" key={opt} onClick={() => onToggle(opt)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selected.includes(opt) && !selected.includes('Todas') ? selectedClassName : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}`}>
+                        {opt}
+                    </button>
+                ))}
+            </div>
+            {selected.map((v) => <input key={v} type="hidden" name={name} value={v} />)}
+        </div>
+    );
+}
 
 export function TeamManagement({ users }: { users: User[] }) {
     const [showForm, setShowForm] = useState(false);
     const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
+    const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
     const [state, formAction, pending] = useActionState(createUserAction, initialState);
-
-    function toggleBrand(brand: string) {
-        if (brand === 'Todas') return setSelectedBrands(['Todas']);
-        setSelectedBrands((prev) => {
-            const rest = prev.filter((b) => b !== 'Todas');
-            return rest.includes(brand) ? rest.filter((b) => b !== brand) : [...rest, brand];
-        });
-    }
-
-    function toggleArea(area: string) {
-        if (area === 'Todas') return setSelectedAreas(['Todas']);
-        setSelectedAreas((prev) => {
-            const rest = prev.filter((a) => a !== 'Todas');
-            return rest.includes(area) ? rest.filter((a) => a !== area) : [...rest, area];
-        });
-    }
 
     return (
         <div className="space-y-6">
@@ -38,7 +59,7 @@ export function TeamManagement({ users }: { users: User[] }) {
                         <Shield className="mr-3 text-indigo-600" size={28} />
                         Administración de Equipo y Roles
                     </h2>
-                    <p className="text-slate-500 text-sm mt-1">Crea perfiles y define áreas de responsabilidad para el enrutamiento automático.</p>
+                    <p className="text-slate-500 text-sm mt-1">Crea perfiles y define áreas de responsabilidad para el enrutamiento automático. Los perfiles no se pueden editar ni eliminar — solo dar de alta nuevos.</p>
                 </div>
                 {!showForm && (
                     <button onClick={() => setShowForm(true)} className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md font-medium text-sm">
@@ -73,35 +94,35 @@ export function TeamManagement({ users }: { users: User[] }) {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Marcas Administradas</label>
-                            <div className="flex flex-wrap gap-2">
-                                <button type="button" onClick={() => toggleBrand('Todas')} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${selectedBrands.includes('Todas') ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                                    Todas
-                                </button>
-                                {BRANDS.map((b) => (
-                                    <button type="button" key={b} onClick={() => toggleBrand(b)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedBrands.includes(b) && !selectedBrands.includes('Todas') ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}`}>
-                                        {b}
-                                    </button>
-                                ))}
-                            </div>
-                            {selectedBrands.map((b) => <input key={b} type="hidden" name="brands" value={b} />)}
-                        </div>
+                        <ToggleGroup
+                            label="Marcas Administradas"
+                            name="brands"
+                            options={BRANDS}
+                            selected={selectedBrands}
+                            onToggle={(v) => setSelectedBrands((prev) => toggleValue(prev, v))}
+                            activeClassName="bg-indigo-600 text-white border-indigo-600"
+                            selectedClassName="bg-indigo-100 text-indigo-700 border-indigo-200"
+                        />
 
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2">Áreas Administradas</label>
-                            <div className="flex flex-wrap gap-2">
-                                <button type="button" onClick={() => toggleArea('Todas')} className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${selectedAreas.includes('Todas') ? 'bg-teal-600 text-white border-teal-600' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'}`}>
-                                    Todas
-                                </button>
-                                {AREAS.map((a) => (
-                                    <button type="button" key={a} onClick={() => toggleArea(a)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${selectedAreas.includes(a) && !selectedAreas.includes('Todas') ? 'bg-teal-100 text-teal-700 border-teal-200' : 'bg-white text-slate-600 hover:bg-slate-50 border-slate-200'}`}>
-                                        {a}
-                                    </button>
-                                ))}
-                            </div>
-                            {selectedAreas.map((a) => <input key={a} type="hidden" name="areas" value={a} />)}
-                        </div>
+                        <ToggleGroup
+                            label="Áreas Administradas"
+                            name="areas"
+                            options={AREAS}
+                            selected={selectedAreas}
+                            onToggle={(v) => setSelectedAreas((prev) => toggleValue(prev, v))}
+                            activeClassName="bg-teal-600 text-white border-teal-600"
+                            selectedClassName="bg-teal-100 text-teal-700 border-teal-200"
+                        />
+
+                        <ToggleGroup
+                            label="Sucursales Administradas"
+                            name="branches"
+                            options={BRANCHES}
+                            selected={selectedBranches}
+                            onToggle={(v) => setSelectedBranches((prev) => toggleValue(prev, v))}
+                            activeClassName="bg-amber-600 text-white border-amber-600"
+                            selectedClassName="bg-amber-100 text-amber-700 border-amber-200"
+                        />
 
                         {state.error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm font-medium rounded-xl p-3">{state.error}</div>}
 
@@ -122,6 +143,7 @@ export function TeamManagement({ users }: { users: User[] }) {
                             <th className="p-4 font-semibold">Rol</th>
                             <th className="p-4 font-semibold">Marcas a cargo</th>
                             <th className="p-4 font-semibold">Áreas a cargo</th>
+                            <th className="p-4 font-semibold">Sucursales a cargo</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -149,6 +171,11 @@ export function TeamManagement({ users }: { users: User[] }) {
                                 <td className="p-4">
                                     <div className="flex flex-wrap gap-1">
                                         {(u.areas as string[]).map((a) => <span key={a} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-100">{a}</span>)}
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex flex-wrap gap-1">
+                                        {((u.branches as string[]) ?? []).map((b) => <span key={b} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">{b}</span>)}
                                     </div>
                                 </td>
                             </tr>

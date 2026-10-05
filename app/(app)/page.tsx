@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from '@/lib/constants';
+import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS, isGerenciaRole } from '@/lib/constants';
 import { businessDaysBetween } from '@/lib/businessDays';
 import { buildClaimsWhere, buildClaimsQueryString, type ClaimsFilterParams } from '@/lib/claimsFilter';
 import { Dashboard } from '@/components/Dashboard';
@@ -11,11 +11,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const currentUser = await requireUser();
     const filters = await searchParams;
     const where = buildClaimsWhere(currentUser, filters);
+    const showResponsable = isGerenciaRole(currentUser.role);
 
-    const claims = await prisma.claim.findMany({
-        where,
-        include: { history: { orderBy: { createdAt: 'desc' }, take: 1 } },
-    });
+    const [claims, responsables] = await Promise.all([
+        prisma.claim.findMany({
+            where,
+            include: { history: { orderBy: { createdAt: 'desc' }, take: 1 } },
+        }),
+        showResponsable ? prisma.user.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }) : Promise.resolve([]),
+    ]);
 
     const thresholdDays = Number(process.env.SLA_BUSINESS_DAYS ?? DEFAULT_SLA_BUSINESS_DAYS);
     const total = claims.length;
@@ -30,7 +34,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const byBrand = new Map<string, number>();
     const byArea = new Map<string, number>();
     for (const c of claims) {
-        byBrand.set(c.brand, (byBrand.get(c.brand) ?? 0) + 1);
+        // Reclamos sin vehículo (ej. RRHH) no tienen marca — se excluyen del
+        // desglose por marca en vez de aparecer como un bucket "null".
+        if (c.brand) byBrand.set(c.brand, (byBrand.get(c.brand) ?? 0) + 1);
         byArea.set(c.area, (byArea.get(c.area) ?? 0) + 1);
     }
     const topBrands = [...byBrand.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
@@ -46,13 +52,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             abiertos={abiertos}
             resueltos={resueltos}
             vencidos={vencidos}
+            thresholdDays={thresholdDays}
             topBrands={topBrands}
             topAreas={topAreas}
             exportHref={exportHref}
             isFiltered={isFiltered}
             searchBar={
                 <Suspense fallback={null}>
-                    <ClaimsSearchBar />
+                    <ClaimsSearchBar responsables={responsables} showResponsable={showResponsable} />
                 </Suspense>
             }
         />

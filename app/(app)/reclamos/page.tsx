@@ -10,12 +10,16 @@ export default async function ReclamosPage({ searchParams }: { searchParams: Pro
     const currentUser = await requireUser();
     const filters = await searchParams;
     const where = buildClaimsWhere(currentUser, filters);
+    const showResponsable = isGerenciaRole(currentUser.role);
 
-    const claims = await prisma.claim.findMany({
-        where,
-        include: { assignedTo: true, history: { orderBy: { createdAt: 'desc' }, take: 1 } },
-        orderBy: { createdAt: 'desc' },
-    });
+    const [claims, responsables] = await Promise.all([
+        prisma.claim.findMany({
+            where,
+            include: { assignedTo: true, history: { orderBy: { createdAt: 'desc' }, take: 1 } },
+            orderBy: { createdAt: 'desc' },
+        }),
+        showResponsable ? prisma.user.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }) : Promise.resolve([]),
+    ]);
 
     const rows = claims.map((c) => ({ ...c, lastActionAt: c.history[0]?.createdAt ?? c.createdAt }));
 
@@ -24,12 +28,12 @@ export default async function ReclamosPage({ searchParams }: { searchParams: Pro
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-extrabold text-slate-800">
-                        {isGerenciaRole(currentUser.role) ? 'Todos los Tickets' : 'Mis Tickets Asignados'}
+                        {showResponsable ? 'Todos los Tickets' : 'Mis Tickets'}
                     </h2>
                     <p className="text-slate-500 text-sm mt-1">Gestiona y da seguimiento a los casos de clientes.</p>
                 </div>
                 <Suspense fallback={null}>
-                    <ClaimsSearchBar />
+                    <ClaimsSearchBar responsables={responsables} showResponsable={showResponsable} />
                 </Suspense>
             </div>
 

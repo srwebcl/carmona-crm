@@ -23,10 +23,13 @@ model User {
   email        String   @unique
   passwordHash String
   role         String
-  // Listas de marcas/áreas que administra este usuario para el enrutamiento
-  // automático. ["Todas"] = sin restricción.
+  // Listas de marcas/áreas/sucursales que administra este usuario, para el
+  // enrutamiento automático y para qué reclamos puede ver/gestionar aunque
+  // no sea el asignado (ver canAccessClaim en src/lib/routing.ts).
+  // ["Todas"] = sin restricción.
   brands       Json
   areas        Json
+  branches     Json     @default("[\"Todas\"]")
   createdAt    DateTime @default(now())
 
   assignedClaims Claim[]        @relation("AssignedClaims")
@@ -41,16 +44,21 @@ model Claim {
   code String @unique
 
   // Datos mínimos del cliente y del caso
-  customerName     String
-  email            String
-  phone            String
-  brand            String
-  vehicleModel     String
-  plate            String
-  eventDate        DateTime // fecha de compra o de visita al servicio técnico
-  area             String
-  description      String   @db.Text
-  expectedSolution String   @db.Text
+  customerName String
+  rut          String
+  email        String
+  phone        String
+  // Nulos cuando el reclamo no está asociado a un vehículo (ej. área RRHH) —
+  // ver checkbox "sin vehículo" en el formulario.
+  brand        String?
+  vehicleModel String?
+  plate        String?
+  eventDate    DateTime // fecha de compra o de visita al servicio técnico
+  area         String
+  // Sucursal de origen del caso: La Serena | Copiapó
+  branch           String
+  description      String  @db.Text
+  expectedSolution String  @db.Text
 
   // Canal de ingreso: WEB | PHONE | IN_PERSON | SOCIAL | EMAIL | OTHER
   channel String
@@ -61,6 +69,9 @@ model Claim {
   // Clasificación de la respuesta final, solo se define al resolver/cerrar:
   // SE_ACOGE | NO_SE_ACOGE | PARCIAL | OTRA_SOLUCION
   resolutionType String?
+  // Texto libre con la solución definitiva aplicada — exigido al marcar
+  // Resuelto, se muestra en una tarjeta propia en el detalle del reclamo.
+  resolutionNotes String? @db.Text
 
   assignedToId Int
   assignedTo   User @relation("AssignedClaims", fields: [assignedToId], references: [id])
@@ -74,6 +85,8 @@ model Claim {
 
   @@index([status])
   @@index([brand])
+  @@index([area])
+  @@index([branch])
   @@index([assignedToId])
   @@map("claims")
 }
@@ -110,10 +123,14 @@ model Attachment {
   history   ClaimHistory? @relation(fields: [historyId], references: [id], onDelete: Cascade)
   historyId Int?
 
-  filename String
-  path     String // ruta pública relativa, ej. /uploads/12/archivo.pdf
-  size     Int
-  mimeType String
+  filename       String
+  path           String // ruta pública relativa, ej. /uploads/12/archivo.pdf
+  size           Int
+  mimeType       String
+  // Nombre de quién lo subió (cliente desde el formulario público, o el
+  // usuario logueado) — copia plana, igual que ClaimHistory.authorName, para
+  // la vista consolidada "Documentos del Caso" (ver ClaimDetail.tsx).
+  uploadedByName String
 
   uploadedAt DateTime @default(now())
 

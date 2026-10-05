@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from 'react';
 import { Plus, Paperclip } from 'lucide-react';
-import { BRANDS, AREAS, CHANNELS } from '@/lib/constants';
+import { BRANDS, AREAS, BRANCHES, CHANNELS } from '@/lib/constants';
 import { Logo } from '@/components/Logo';
 import type { ClaimFormState } from '@/actions/claims';
 
@@ -23,6 +23,7 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
     const [state, formAction, pending] = useActionState(action, initialState);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileNames, setFileNames] = useState<string[]>([]);
+    const [noVehicle, setNoVehicle] = useState(false);
 
     return (
         <div className="max-w-3xl mx-auto space-y-8">
@@ -57,12 +58,22 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                                 <input name="customerName" required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Ej. Ana López" />
                             </div>
                             <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">RUT *</label>
+                                <input name="rut" required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="12.345.678-9" />
+                            </div>
+                            <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Teléfono *</label>
                                 <input name="phone" required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="+56 9 1234 5678" />
                             </div>
-                            <div className="md:col-span-2">
+                            <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Correo Electrónico *</label>
                                 <input name="email" required type="email" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="ana@ejemplo.com" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Sucursal *</label>
+                                <select name="branch" required defaultValue={BRANCHES[0]} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer">
+                                    {BRANCHES.map((b) => <option key={b} value={b}>{b}</option>)}
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -71,22 +82,35 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                         <h3 className="text-lg font-bold text-slate-800 mb-4">2. Datos del Vehículo</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Marca *</label>
-                                <select name="brand" required defaultValue={BRANDS[0]} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer">
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Marca {!noVehicle && '*'}</label>
+                                <select name="brand" required={!noVehicle} disabled={noVehicle} defaultValue={BRANDS[0]} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                     {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Modelo *</label>
-                                <input name="vehicleModel" required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Ej. Yaris, Hilux..." />
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Modelo {!noVehicle && '*'}</label>
+                                <input name="vehicleModel" required={!noVehicle} disabled={noVehicle} type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed" placeholder="Ej. Yaris, Hilux..." />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Patente *</label>
-                                <input name="plate" required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase" placeholder="AB1234" />
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Patente {!noVehicle && '*'}</label>
+                                <input name="plate" required={!noVehicle} disabled={noVehicle} type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase disabled:opacity-50 disabled:cursor-not-allowed" placeholder="AB1234" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Fecha de compra o de visita *</label>
                                 <input name="eventDate" required type="date" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="flex items-center gap-2 text-sm font-medium text-slate-600 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        name="noVehicle"
+                                        value="true"
+                                        checked={noVehicle}
+                                        onChange={(e) => setNoVehicle(e.target.checked)}
+                                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    Este reclamo no está relacionado con un vehículo
+                                </label>
                             </div>
                         </div>
                     </div>

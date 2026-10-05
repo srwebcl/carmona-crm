@@ -2,7 +2,8 @@ import 'server-only';
 import type { User } from '@prisma/client';
 import { prisma } from './prisma';
 import { businessDaysBetween } from './businessDays';
-import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS, isGerenciaRole } from './constants';
+import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from './constants';
+import { buildClaimsWhere } from './claimsFilter';
 
 export interface Notification {
     id: string;
@@ -10,14 +11,13 @@ export interface Notification {
     urgent?: boolean;
 }
 
-/** Notificaciones para la campanita del header: nuevos sin revisar y SLA vencido. */
+/** Notificaciones para la campanita del header: nuevos sin revisar y SLA vencido, en todo lo que el usuario puede ver (ver canAccessClaim). */
 export async function getNotifications(currentUser: User): Promise<Notification[]> {
     const thresholdDays = Number(process.env.SLA_BUSINESS_DAYS ?? DEFAULT_SLA_BUSINESS_DAYS);
 
     const claims = await prisma.claim.findMany({
         where: {
-            status: { notIn: CLOSED_STATUSES },
-            ...(isGerenciaRole(currentUser.role) ? {} : { assignedToId: currentUser.id }),
+            AND: [buildClaimsWhere(currentUser, {}), { status: { notIn: CLOSED_STATUSES } }],
         },
         include: { history: { orderBy: { createdAt: 'desc' }, take: 1 } },
     });

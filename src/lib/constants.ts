@@ -9,7 +9,9 @@ export const BRANDS = [
     'Foton Camiones', 'Iveco', 'MAN', 'VW Camiones',
 ] as const;
 
-export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos'] as const;
+export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos'] as const;
+
+export const BRANCHES = ['La Serena', 'Copiapó'] as const;
 
 export const STATUSES = [
     { value: 'NUEVO', label: 'Nuevo' },
@@ -54,6 +56,7 @@ export const HISTORY_TYPES = [
 // Listas planas de valores, útiles para validación (zod) y para iterar en UI.
 export const AREA_VALUES = AREAS as unknown as [string, ...string[]];
 export const BRAND_VALUES = BRANDS as unknown as [string, ...string[]];
+export const BRANCH_VALUES = BRANCHES as unknown as [string, ...string[]];
 export const STATUS_VALUES = STATUSES.map((s) => s.value) as [string, ...string[]];
 export const CHANNEL_VALUES = CHANNELS.map((c) => c.value) as [string, ...string[]];
 export const RESOLUTION_VALUES = RESOLUTION_TYPES.map((r) => r.value) as [string, ...string[]];

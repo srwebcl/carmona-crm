@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import type { Claim, User } from '@prisma/client';
 import { statusLabel, CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from '@/lib/constants';
 import { businessDaysBetween } from '@/lib/businessDays';
+import { formatDate } from '@/lib/formatDate';
 
 function getStatusStyle(status: string) {
     switch (status) {
@@ -30,6 +31,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                             <th className="p-4 pl-6 font-semibold">ID Ticket</th>
                             <th className="p-4 font-semibold">Cliente</th>
                             <th className="p-4 font-semibold">Vehículo & Área</th>
+                            <th className="p-4 font-semibold">Sucursal</th>
                             <th className="p-4 font-semibold">Estado</th>
                             <th className="p-4 font-semibold">Responsable</th>
                             <th className="p-4 font-semibold">Fecha Ingreso</th>
@@ -52,10 +54,11 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                                     </td>
                                     <td className="p-4">
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-slate-700">{claim.brand} {claim.vehicleModel}</span>
+                                            <span className="text-sm font-semibold text-slate-700">{claim.brand ? `${claim.brand} ${claim.vehicleModel}` : 'No aplica'}</span>
                                             <span className="text-xs text-slate-500">{claim.area}</span>
                                         </div>
                                     </td>
+                                    <td className="p-4 text-sm text-slate-600">{claim.branch}</td>
                                     <td className="p-4">
                                         <span className={clsx('px-3 py-1.5 rounded-full text-xs font-bold border', getStatusStyle(claim.status))}>
                                             {statusLabel(claim.status)}
@@ -71,7 +74,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                                     </td>
                                     <td className="p-4 text-sm">
                                         <div className="flex items-center">
-                                            <span className="text-slate-600 font-medium">{new Date(claim.createdAt).toLocaleDateString('es-CL')}</span>
+                                            <span className="text-slate-600 font-medium">{formatDate(claim.createdAt)}</span>
                                             {isOverdue && <div title="SLA Vencido"><AlertCircle size={14} className="text-red-500 ml-2" /></div>}
                                         </div>
                                     </td>
@@ -88,7 +91,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                         })}
                         {claims.length === 0 && (
                             <tr>
-                                <td colSpan={7} className="p-12 text-center">
+                                <td colSpan={8} className="p-12 text-center">
                                     <div className="flex flex-col items-center justify-center text-slate-400">
                                         <AlertCircle size={48} className="mb-4 text-slate-300" />
                                         <p className="text-lg font-medium text-slate-600">No hay tickets para mostrar</p>

@@ -21,6 +21,7 @@ export async function createUserAction(_prevState: UserFormState, formData: Form
         password: formData.get('password'),
         brands: formData.getAll('brands'),
         areas: formData.getAll('areas'),
+        branches: formData.getAll('branches'),
     });
     if (!parsed.success) {
         return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos ingresados.' };
@@ -38,6 +39,7 @@ export async function createUserAction(_prevState: UserFormState, formData: Form
             passwordHash,
             brands: parsed.data.brands,
             areas: parsed.data.areas,
+            branches: parsed.data.branches,
         },
     });
 
