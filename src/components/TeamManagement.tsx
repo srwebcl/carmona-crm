@@ -1,12 +1,13 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { Shield, Plus, X } from 'lucide-react';
+import { Shield, Plus, X, Pencil, Trash2 } from 'lucide-react';
 import type { User } from '@prisma/client';
-import { createUserAction, type UserFormState } from '@/actions/users';
+import { createUserAction, updateUserAction, deleteUserAction, type UserFormState, type DeleteUserState } from '@/actions/users';
 import { BRANDS, AREAS, BRANCHES } from '@/lib/constants';
 
 const initialState: UserFormState = {};
+const initialDeleteState: DeleteUserState = {};
 
 /** Togglea un valor dentro de una lista de selección múltiple con comodín "Todas" (usado por marcas/áreas/sucursales). */
 function toggleValue(list: string[], value: string): string[] {
@@ -44,12 +45,103 @@ function ToggleGroup({ label, name, options, selected, onToggle, activeClassName
     );
 }
 
+interface UserRowProps {
+    user: User;
+    onEdit: () => void;
+}
+
+function UserRow({ user, onEdit }: UserRowProps) {
+    const [state, formAction, pending] = useActionState(deleteUserAction, initialDeleteState);
+
+    function handleDeleteSubmit(e: React.FormEvent<HTMLFormElement>) {
+        if (!window.confirm(`¿Eliminar el perfil de ${user.name}? Esta acción no se puede deshacer.`)) {
+            e.preventDefault();
+        }
+    }
+
+    return (
+        <tr className="hover:bg-slate-50/80 transition-colors">
+            <td className="p-4 pl-6">
+                <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-bold mr-3">
+                        {user.name.charAt(0)}
+                    </div>
+                    <div>
+                        <span className="font-bold text-slate-800 block">{user.name}</span>
+                        <span className="text-xs text-slate-400">{user.email}</span>
+                    </div>
+                </div>
+            </td>
+            <td className="p-4">
+                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold border border-slate-200">{user.role}</span>
+            </td>
+            <td className="p-4">
+                <div className="flex flex-wrap gap-1">
+                    {(user.brands as string[]).map((b) => <span key={b} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100">{b}</span>)}
+                </div>
+            </td>
+            <td className="p-4">
+                <div className="flex flex-wrap gap-1">
+                    {(user.areas as string[]).map((a) => <span key={a} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-100">{a}</span>)}
+                </div>
+            </td>
+            <td className="p-4">
+                <div className="flex flex-wrap gap-1">
+                    {((user.branches as string[]) ?? []).map((b) => <span key={b} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">{b}</span>)}
+                </div>
+            </td>
+            <td className="p-4 pr-6 text-right">
+                <div className="flex items-center justify-end gap-1">
+                    <button onClick={onEdit} title="Editar perfil" className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                        <Pencil size={16} />
+                    </button>
+                    <form action={formAction} onSubmit={handleDeleteSubmit}>
+                        <input type="hidden" name="id" value={user.id} />
+                        <button type="submit" disabled={pending} title="Eliminar perfil" className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50">
+                            <Trash2 size={16} />
+                        </button>
+                    </form>
+                </div>
+                {state.error && <p className="text-xs text-red-600 font-medium mt-1.5 max-w-[220px] text-right">{state.error}</p>}
+            </td>
+        </tr>
+    );
+}
+
 export function TeamManagement({ users }: { users: User[] }) {
     const [showForm, setShowForm] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
     const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
     const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
     const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
-    const [state, formAction, pending] = useActionState(createUserAction, initialState);
+    const [createState, createFormAction, createPending] = useActionState(createUserAction, initialState);
+    const [updateState, updateFormAction, updatePending] = useActionState(updateUserAction, initialState);
+
+    const isEditing = editingUser !== null;
+    const state = isEditing ? updateState : createState;
+    const formAction = isEditing ? updateFormAction : createFormAction;
+    const pending = isEditing ? updatePending : createPending;
+
+    function openCreateForm() {
+        setEditingUser(null);
+        setSelectedBrands([]);
+        setSelectedAreas([]);
+        setSelectedBranches([]);
+        setShowForm(true);
+    }
+
+    function openEditForm(user: User) {
+        setEditingUser(user);
+        setSelectedBrands((user.brands as string[]) ?? []);
+        setSelectedAreas((user.areas as string[]) ?? []);
+        setSelectedBranches((user.branches as string[]) ?? []);
+        setShowForm(true);
+    }
+
+    function closeForm() {
+        setShowForm(false);
+        setEditingUser(null);
+    }
 
     return (
         <div className="space-y-6">
@@ -59,10 +151,10 @@ export function TeamManagement({ users }: { users: User[] }) {
                         <Shield className="mr-3 text-indigo-600" size={28} />
                         Administración de Equipo y Roles
                     </h2>
-                    <p className="text-slate-500 text-sm mt-1">Crea perfiles y define áreas de responsabilidad para el enrutamiento automático. Los perfiles no se pueden editar ni eliminar — solo dar de alta nuevos.</p>
+                    <p className="text-slate-500 text-sm mt-1">Crea, edita o elimina perfiles y define áreas de responsabilidad para el enrutamiento automático.</p>
                 </div>
                 {!showForm && (
-                    <button onClick={() => setShowForm(true)} className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md font-medium text-sm">
+                    <button onClick={openCreateForm} className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md font-medium text-sm">
                         <Plus size={18} className="mr-2" /> Nuevo Perfil
                     </button>
                 )}
@@ -70,27 +162,28 @@ export function TeamManagement({ users }: { users: User[] }) {
 
             {showForm && (
                 <div className="glass-card p-6 border-t-4 border-t-indigo-500 relative">
-                    <button onClick={() => setShowForm(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                    <button onClick={closeForm} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
                         <X size={24} />
                     </button>
-                    <h3 className="text-lg font-bold text-slate-800 mb-6">Crear Nuevo Perfil</h3>
+                    <h3 className="text-lg font-bold text-slate-800 mb-6">{isEditing ? `Editar Perfil — ${editingUser.name}` : 'Crear Nuevo Perfil'}</h3>
                     <form action={formAction} className="space-y-6">
+                        {isEditing && <input type="hidden" name="id" value={editingUser.id} />}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Nombre Completo *</label>
-                                <input name="name" required type="text" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Roberto Sánchez" />
+                                <input name="name" required type="text" defaultValue={editingUser?.name} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Roberto Sánchez" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Cargo / Rol *</label>
-                                <input name="role" required type="text" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Jefe Ventas Usados (usar &quot;Gerencia&quot; para ver todos los reclamos)" />
+                                <input name="role" required type="text" defaultValue={editingUser?.role} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Jefe Ventas Usados (usar &quot;Gerencia&quot; para ver todos los reclamos)" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Correo Corporativo *</label>
-                                <input name="email" required type="email" className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="nombre@carmona.cl" />
+                                <input name="email" required type="email" defaultValue={editingUser?.email} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="nombre@carmona.cl" />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Contraseña o PIN *</label>
-                                <input name="password" required type="password" minLength={4} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Mínimo 4 caracteres" />
+                                <label className="block text-sm font-bold text-slate-700 mb-1.5">Contraseña o PIN {isEditing ? '' : '*'}</label>
+                                <input name="password" required={!isEditing} type="password" minLength={4} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder={isEditing ? 'Dejar en blanco para no cambiarla' : 'Mínimo 4 caracteres'} />
                             </div>
                         </div>
 
@@ -128,7 +221,7 @@ export function TeamManagement({ users }: { users: User[] }) {
 
                         <div className="flex justify-end pt-4 border-t border-slate-100">
                             <button type="submit" disabled={pending} className="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-70">
-                                {pending ? 'Guardando...' : 'Guardar Perfil'}
+                                {pending ? 'Guardando...' : isEditing ? 'Guardar Cambios' : 'Guardar Perfil'}
                             </button>
                         </div>
                     </form>
@@ -144,41 +237,12 @@ export function TeamManagement({ users }: { users: User[] }) {
                             <th className="p-4 font-semibold">Marcas a cargo</th>
                             <th className="p-4 font-semibold">Áreas a cargo</th>
                             <th className="p-4 font-semibold">Sucursales a cargo</th>
+                            <th className="p-4 font-semibold text-right pr-6">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {users.map((u) => (
-                            <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                                <td className="p-4 pl-6">
-                                    <div className="flex items-center">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-bold mr-3">
-                                            {u.name.charAt(0)}
-                                        </div>
-                                        <div>
-                                            <span className="font-bold text-slate-800 block">{u.name}</span>
-                                            <span className="text-xs text-slate-400">{u.email}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold border border-slate-200">{u.role}</span>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex flex-wrap gap-1">
-                                        {(u.brands as string[]).map((b) => <span key={b} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100">{b}</span>)}
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex flex-wrap gap-1">
-                                        {(u.areas as string[]).map((a) => <span key={a} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-100">{a}</span>)}
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex flex-wrap gap-1">
-                                        {((u.branches as string[]) ?? []).map((b) => <span key={b} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">{b}</span>)}
-                                    </div>
-                                </td>
-                            </tr>
+                            <UserRow key={u.id} user={u} onEdit={() => openEditForm(u)} />
                         ))}
                     </tbody>
                 </table>

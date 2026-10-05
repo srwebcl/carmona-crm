@@ -75,6 +75,16 @@ export const userSchema = z.object({
     branches: z.array(z.string()).min(1, 'Selecciona al menos una sucursal.'),
 });
 
+// Igual que userSchema, pero para editar un perfil existente: la
+// contraseña/PIN es opcional — un valor vacío significa "no cambiarla".
+export const updateUserSchema = userSchema.extend({
+    password: z
+        .string()
+        .trim()
+        .optional()
+        .refine((v) => !v || v.length >= 4, 'La contraseña o PIN debe tener al menos 4 caracteres.'),
+});
+
 export const loginSchema = z.object({
     email: z.string().trim().email('Correo inválido.'),
     password: z.string().min(1, 'Ingresa tu contraseña o PIN.'),
