@@ -2,7 +2,7 @@
 
 import { useActionState, useRef, useState } from 'react';
 import { Plus, Paperclip } from 'lucide-react';
-import { BRANDS, AREAS, BRANCHES, CHANNELS } from '@/lib/constants';
+import { BRANDS, AREAS, BRANCHES, CHANNELS, isUsedCarArea } from '@/lib/constants';
 import { Logo } from '@/components/Logo';
 import type { ClaimFormState } from '@/actions/claims';
 
@@ -24,6 +24,8 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [fileNames, setFileNames] = useState<string[]>([]);
     const [noVehicle, setNoVehicle] = useState(false);
+    const [area, setArea] = useState<string>(AREAS[0]);
+    const usedCarArea = isUsedCarArea(area);
 
     return (
         <div className="max-w-3xl mx-auto space-y-8">
@@ -51,7 +53,26 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                     )}
 
                     <div className="border-b border-slate-100 pb-6 mb-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">1. Datos del Cliente</h3>
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">1. ¿A qué área corresponde?</h3>
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Área Relacionada *</label>
+                            <select
+                                name="area"
+                                required
+                                value={area}
+                                onChange={(e) => setArea(e.target.value)}
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer"
+                            >
+                                {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
+                            </select>
+                            {usedCarArea && (
+                                <p className="text-xs text-slate-500 mt-1.5">En {area} se vende cualquier marca — a continuación podrás escribirla libremente.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="border-b border-slate-100 pb-6 mb-6">
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">2. Datos del Cliente</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Nombre Completo *</label>
@@ -79,13 +100,24 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                     </div>
 
                     <div className="border-b border-slate-100 pb-6 mb-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">2. Datos del Vehículo</h3>
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">3. Datos del Vehículo</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Marca {!noVehicle && '*'}</label>
-                                <select name="brand" required={!noVehicle} disabled={noVehicle} defaultValue={BRANDS[0]} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-                                    {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
-                                </select>
+                                {usedCarArea ? (
+                                    <input
+                                        name="brand"
+                                        required={!noVehicle}
+                                        disabled={noVehicle}
+                                        type="text"
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        placeholder="Ej. Mazda, Ford, Suzuki (moto), Hino (camión)..."
+                                    />
+                                ) : (
+                                    <select name="brand" required={!noVehicle} disabled={noVehicle} defaultValue={BRANDS[0]} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+                                    </select>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Modelo {!noVehicle && '*'}</label>
@@ -116,14 +148,7 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                     </div>
 
                     <div>
-                        <h3 className="text-lg font-bold text-slate-800 mb-4">3. Detalle del Caso</h3>
-                        <div className="mb-5">
-                            <label className="block text-sm font-bold text-slate-700 mb-1.5">Área Relacionada *</label>
-                            <select name="area" required defaultValue={AREAS[0]} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer">
-                                {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
-                            </select>
-                        </div>
-
+                        <h3 className="text-lg font-bold text-slate-800 mb-4">4. Detalle del Caso</h3>
                         <div className="mb-5">
                             <label className="block text-sm font-bold text-slate-700 mb-1.5">Describa los hechos *</label>
                             <textarea name="description" required rows={4} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none" placeholder="Entregue la mayor cantidad de detalles posible..."></textarea>

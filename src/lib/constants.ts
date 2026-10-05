@@ -9,7 +9,17 @@ export const BRANDS = [
     'Foton Camiones', 'Iveco', 'MAN', 'VW Camiones',
 ] as const;
 
-export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos'] as const;
+export const AREAS = ['Ventas', 'Usados', 'Usados Premium', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos'] as const;
+
+// En Usados/Usados Premium se vende cualquier marca (incluyendo motos y
+// camiones), no solo las marcas oficiales que vende el concesionario nuevo —
+// por eso en esas áreas el campo Marca del formulario se abre a texto libre
+// en vez del listado fijo de BRANDS (ver ClaimForm.tsx).
+export const USED_CAR_AREAS = ['Usados', 'Usados Premium'] as const;
+
+export function isUsedCarArea(area: string): boolean {
+    return (USED_CAR_AREAS as readonly string[]).includes(area);
+}
 
 export const BRANCHES = ['La Serena', 'Copiapó'] as const;
 
