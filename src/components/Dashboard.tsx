@@ -7,7 +7,7 @@ interface DashboardProps {
     abiertos: number;
     resueltos: number;
     vencidos: number;
-    thresholdDays: number;
+    thresholdHours: number;
     topBrands: [string, number][];
     topAreas: [string, number][];
     exportHref: string;
@@ -15,7 +15,7 @@ interface DashboardProps {
     searchBar: ReactNode;
 }
 
-export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdDays, topBrands, topAreas, exportHref, isFiltered, searchBar }: DashboardProps) {
+export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdHours, topBrands, topAreas, exportHref, isFiltered, searchBar }: DashboardProps) {
     return (
         <div className="space-y-8">
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
@@ -70,7 +70,7 @@ export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdDays,
                     <div className="z-10">
                         <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
                             Reclamos Atrasados
-                            <InfoTooltip text={`Reclamos abiertos (no Resueltos/Cerrados) con ${thresholdDays} o más días hábiles sin ninguna gestión registrada en la bitácora.`} />
+                            <InfoTooltip text={`Reclamos abiertos (no Resueltos/Cerrados) con ${thresholdHours} o más horas sin ninguna gestión registrada en la bitácora.`} />
                         </p>
                         <p className="text-3xl font-extrabold text-red-600">{vencidos}</p>
                     </div>

@@ -1,8 +1,8 @@
 import 'server-only';
 import { prisma } from './prisma';
-import { businessDaysBetween } from './businessDays';
+import { hoursBetween } from './hours';
 import { sendMail, slaAlertEmail } from './mailer';
-import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS, SYSTEM_HISTORY_TYPES } from './constants';
+import { CLOSED_STATUSES, DEFAULT_SLA_HOURS, SYSTEM_HISTORY_TYPES } from './constants';
 
 function startOfToday() {
     const d = new Date();
@@ -11,16 +11,16 @@ function startOfToday() {
 }
 
 /**
- * Revisa todos los reclamos abiertos y, para los que llevan >= N días
- * hábiles sin ninguna gestión registrada, envía un correo de alerta al
- * responsable (una sola vez por día por reclamo) y deja registro en el
- * historial y en AlertLog.
+ * Revisa todos los reclamos abiertos y, para los que llevan >= N horas sin
+ * ninguna gestión registrada, envía un correo de alerta al responsable (una
+ * sola vez por día por reclamo) y deja registro en el historial y en
+ * AlertLog.
  *
  * Se invoca desde el cron diario (ver instrumentation.ts) y también puede
  * llamarse manualmente para pruebas.
  */
 export async function runSlaAlertCheck() {
-    const thresholdDays = Number(process.env.SLA_BUSINESS_DAYS ?? DEFAULT_SLA_BUSINESS_DAYS);
+    const thresholdHours = Number(process.env.SLA_HOURS ?? DEFAULT_SLA_HOURS);
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
 
     const claims = await prisma.claim.findMany({
@@ -35,9 +35,9 @@ export async function runSlaAlertCheck() {
 
     for (const claim of claims) {
         const lastActionDate = claim.history[0]?.createdAt ?? claim.createdAt;
-        const daysWithoutManagement = businessDaysBetween(lastActionDate, new Date());
+        const hoursWithoutManagement = hoursBetween(lastActionDate, new Date());
 
-        if (daysWithoutManagement < thresholdDays) continue;
+        if (hoursWithoutManagement < thresholdHours) continue;
 
         const alreadySentToday = await prisma.alertLog.findFirst({
             where: { claimId: claim.id, sentAt: { gte: startOfToday() } },
@@ -47,7 +47,7 @@ export async function runSlaAlertCheck() {
         const email = slaAlertEmail({
             code: claim.code,
             customerName: claim.customerName,
-            daysWithoutManagement,
+            hoursWithoutManagement: Math.floor(hoursWithoutManagement),
             url: `${appUrl}/reclamos/${claim.id}`,
         });
 
@@ -64,7 +64,7 @@ export async function runSlaAlertCheck() {
 
         await prisma.$transaction([
             prisma.alertLog.create({
-                data: { claimId: claim.id, thresholdDays: daysWithoutManagement },
+                data: { claimId: claim.id, thresholdHours: Math.floor(hoursWithoutManagement) },
             }),
             prisma.claimHistory.create({
                 data: {
@@ -72,7 +72,7 @@ export async function runSlaAlertCheck() {
                     userId: null,
                     authorName: 'Sistema',
                     type: SYSTEM_HISTORY_TYPES.ALERTA_ENVIADA,
-                    text: `Alerta automática enviada a ${claim.assignedTo.name} (${claim.assignedTo.email}): ${daysWithoutManagement} días hábiles sin gestión.`,
+                    text: `Alerta automática enviada a ${claim.assignedTo.name} (${claim.assignedTo.email}): ${Math.floor(hoursWithoutManagement)} horas sin gestión.`,
                 },
             }),
         ]);

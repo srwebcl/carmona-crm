@@ -1,8 +1,8 @@
 import 'server-only';
 import type { User } from '@prisma/client';
 import { prisma } from './prisma';
-import { businessDaysBetween } from './businessDays';
-import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from './constants';
+import { hoursBetween } from './hours';
+import { CLOSED_STATUSES, DEFAULT_SLA_HOURS } from './constants';
 import { buildClaimsWhere } from './claimsFilter';
 
 export interface Notification {
@@ -13,7 +13,7 @@ export interface Notification {
 
 /** Notificaciones para la campanita del header: nuevos sin revisar y SLA vencido, en todo lo que el usuario puede ver (ver canAccessClaim). */
 export async function getNotifications(currentUser: User): Promise<Notification[]> {
-    const thresholdDays = Number(process.env.SLA_BUSINESS_DAYS ?? DEFAULT_SLA_BUSINESS_DAYS);
+    const thresholdHours = Number(process.env.SLA_HOURS ?? DEFAULT_SLA_HOURS);
 
     const claims = await prisma.claim.findMany({
         where: {
@@ -28,9 +28,9 @@ export async function getNotifications(currentUser: User): Promise<Notification[
             notifications.push({ id: claim.code, text: `Nuevo reclamo sin revisar: ${claim.code}` });
         }
         const lastActionDate = claim.history[0]?.createdAt ?? claim.createdAt;
-        const days = businessDaysBetween(lastActionDate, new Date());
-        if (days >= thresholdDays) {
-            notifications.push({ id: `${claim.code}-sla`, text: `Reclamo atrasado (≥${thresholdDays} días hábiles sin gestión) en ${claim.code}`, urgent: true });
+        const hours = hoursBetween(lastActionDate, new Date());
+        if (hours >= thresholdHours) {
+            notifications.push({ id: `${claim.code}-sla`, text: `Reclamo atrasado (≥${thresholdHours} horas sin gestión) en ${claim.code}`, urgent: true });
         }
     }
     return notifications;

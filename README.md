@@ -55,9 +55,9 @@ Pensado para revisión rápida y también apto para producción liviana. Requier
 
 1. **Base de datos**: Marketplace → Neon Postgres (`vercel integration add neon`). Provisiona `DATABASE_URL` automáticamente.
 2. **Adjuntos**: `vercel blob store add` — provisiona `BLOB_READ_WRITE_TOKEN`. Con esa variable presente, [src/lib/uploads.ts](src/lib/uploads.ts) guarda los archivos ahí en vez de disco (en Vercel no hay disco persistente). Nota: los adjuntos quedan en una URL pública no adivinable, pero — a diferencia de la ruta propia `/uploads/[...path]` usada al autoalojar — no exigen sesión para abrirse.
-3. **Variables propias** (`vercel env add <nombre> production`): `SESSION_SECRET`, `CRON_SECRET` (para `/api/cron/sla-check`, ver abajo), `SLA_BUSINESS_DAYS`, `APP_URL` (la URL del deployment). SMTP es opcional — sin `SMTP_HOST` el mailer solo deja log, no rompe nada.
+3. **Variables propias** (`vercel env add <nombre> production`): `SESSION_SECRET`, `CRON_SECRET` (para `/api/cron/sla-check`, ver abajo), `SLA_HOURS`, `APP_URL` (la URL del deployment). SMTP es opcional — sin `SMTP_HOST` el mailer solo deja log, no rompe nada.
 4. Migrar y sembrar contra la BD de Vercel: `vercel env pull` (trae las env vars reales a `.env.local`) y luego `npm run db:migrate:deploy` + `npm run db:seed`.
-5. Alertas de SLA: `vercel.json` define un cron (`0 12 * * 1-5`, ~9am Chile) que llama a `app/api/cron/sla-check/route.ts` — reemplaza al `node-cron` de `instrumentation.ts` (que se desactiva solo en Vercel, no hay proceso persistente donde correr un scheduler in-process).
+5. Alertas de SLA: `vercel.json` define un cron (`0 */6 * * *`, cada 6 horas, todos los días) que llama a `app/api/cron/sla-check/route.ts` — reemplaza al `node-cron` de `instrumentation.ts` (que se desactiva solo en Vercel, no hay proceso persistente donde correr un scheduler in-process).
 6. Deploy: `vercel --prod`, o simplemente hacer push a `main` una vez conectado el repo de GitHub al proyecto (`vercel git connect`).
 
 ## Despliegue en Cloudways (alternativa self-hosted)
@@ -75,14 +75,14 @@ Requiere primero volver el schema a MySQL (ver [arriba](#motor-de-base-de-datos-
    node .next/standalone/server.js
    ```
    (`npm start`/`next start` avisa que no sirve del todo con `output: standalone` — en producción usar siempre `node .next/standalone/server.js` como arriba, gestionado con PM2 o el manejador de procesos de Cloudways.)
-4. El cron de alertas de SLA (5 días hábiles sin gestión por defecto, ver `SLA_BUSINESS_DAYS`) se arranca solo dentro del propio proceso Node (`instrumentation.ts`, vía `node-cron`) — no requiere cron a nivel de sistema operativo, pero si se corre más de una instancia del proceso, revisar que no se dupliquen los envíos (hoy previene reenvíos el mismo día vía `AlertLog`, no entre instancias simultáneas).
+4. El cron de alertas de SLA (48 horas de reloj corrido sin gestión por defecto, ver `SLA_HOURS`) se arranca solo dentro del propio proceso Node (`instrumentation.ts`, vía `node-cron`) — no requiere cron a nivel de sistema operativo, pero si se corre más de una instancia del proceso, revisar que no se dupliquen los envíos (hoy previene reenvíos el mismo día vía `AlertLog`, no entre instancias simultáneas).
 5. Endpoint de salud para el balanceador/monitoreo: `GET /api/health`.
 
 ## Estructura
 
 - `app/` — rutas (App Router). `app/(app)/` son las páginas internas protegidas (dashboard, reclamos, equipo); `app/reclamo/` y `app/login/` son públicas.
 - `src/actions/` — Server Actions (mutaciones: crear reclamo, cambiar estado, reasignar, crear usuario, login).
-- `src/lib/` — Prisma client, autenticación (sesión propia con cookie firmada + bcrypt), reglas de enrutamiento automático, cálculo de días hábiles, envío de correo, exportación CSV, manejo de adjuntos.
+- `src/lib/` — Prisma client, autenticación (sesión propia con cookie firmada + bcrypt), reglas de enrutamiento automático, cálculo de horas transcurridas, envío de correo, exportación CSV, manejo de adjuntos.
 - `src/components/` — UI (mismo diseño visual del prototipo original, adaptado a Server/Client Components).
 - `prisma/schema.prisma` — modelo de datos. `prisma/seed.ts` — datos de ejemplo.
 - `proxy.ts` — protección de rutas (reemplaza al histórico `middleware.ts` en Next.js 16).

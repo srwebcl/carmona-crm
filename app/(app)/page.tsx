@@ -1,8 +1,8 @@
 import { Suspense } from 'react';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS, isGerenciaRole } from '@/lib/constants';
-import { businessDaysBetween } from '@/lib/businessDays';
+import { CLOSED_STATUSES, DEFAULT_SLA_HOURS, isGerenciaRole } from '@/lib/constants';
+import { hoursBetween } from '@/lib/hours';
 import { buildClaimsWhere, buildClaimsQueryString, type ClaimsFilterParams } from '@/lib/claimsFilter';
 import { Dashboard } from '@/components/Dashboard';
 import { ClaimsSearchBar } from '@/components/ClaimsSearchBar';
@@ -21,14 +21,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         showResponsable ? prisma.user.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true } }) : Promise.resolve([]),
     ]);
 
-    const thresholdDays = Number(process.env.SLA_BUSINESS_DAYS ?? DEFAULT_SLA_BUSINESS_DAYS);
+    const thresholdHours = Number(process.env.SLA_HOURS ?? DEFAULT_SLA_HOURS);
     const total = claims.length;
     const abiertos = claims.filter((c) => !CLOSED_STATUSES.includes(c.status as 'RESUELTO' | 'CERRADO')).length;
     const resueltos = total - abiertos;
     const vencidos = claims.filter((c) => {
         if (CLOSED_STATUSES.includes(c.status as 'RESUELTO' | 'CERRADO')) return false;
         const lastAction = c.history[0]?.createdAt ?? c.createdAt;
-        return businessDaysBetween(lastAction, new Date()) >= thresholdDays;
+        return hoursBetween(lastAction, new Date()) >= thresholdHours;
     }).length;
 
     const byBrand = new Map<string, number>();
@@ -52,7 +52,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             abiertos={abiertos}
             resueltos={resueltos}
             vencidos={vencidos}
-            thresholdDays={thresholdDays}
+            thresholdHours={thresholdHours}
             topBrands={topBrands}
             topAreas={topAreas}
             exportHref={exportHref}

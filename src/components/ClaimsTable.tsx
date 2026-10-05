@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { ChevronRight, AlertCircle } from 'lucide-react';
 import clsx from 'clsx';
 import type { Claim, User } from '@prisma/client';
-import { statusLabel, CLOSED_STATUSES, DEFAULT_SLA_BUSINESS_DAYS } from '@/lib/constants';
-import { businessDaysBetween } from '@/lib/businessDays';
+import { statusLabel, CLOSED_STATUSES, DEFAULT_SLA_HOURS } from '@/lib/constants';
+import { hoursBetween } from '@/lib/hours';
 import { formatDate } from '@/lib/formatDate';
 
 function getStatusStyle(status: string) {
@@ -20,7 +20,7 @@ function getStatusStyle(status: string) {
 type ClaimWithAssignee = Claim & { assignedTo: User; lastActionAt: Date };
 
 export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
-    const thresholdDays = Number(process.env.SLA_BUSINESS_DAYS ?? DEFAULT_SLA_BUSINESS_DAYS);
+    const thresholdHours = Number(process.env.SLA_HOURS ?? DEFAULT_SLA_HOURS);
 
     return (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -41,7 +41,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                     <tbody className="divide-y divide-slate-100">
                         {claims.map((claim) => {
                             const isOverdue = !CLOSED_STATUSES.includes(claim.status as 'RESUELTO' | 'CERRADO')
-                                && businessDaysBetween(claim.lastActionAt, new Date()) >= thresholdDays;
+                                && hoursBetween(claim.lastActionAt, new Date()) >= thresholdHours;
 
                             return (
                                 <tr key={claim.id} className="hover:bg-slate-50/80 transition-colors group">
@@ -75,7 +75,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                                     <td className="p-4 text-sm">
                                         <div className="flex items-center">
                                             <span className="text-slate-600 font-medium">{formatDate(claim.createdAt)}</span>
-                                            {isOverdue && <div title="Reclamo atrasado — sin gestión hace días"><AlertCircle size={14} className="text-red-500 ml-2" /></div>}
+                                            {isOverdue && <div title="Reclamo atrasado — sin gestión hace horas"><AlertCircle size={14} className="text-red-500 ml-2" /></div>}
                                         </div>
                                     </td>
                                     <td className="p-4 pr-6 text-right">

@@ -139,11 +139,11 @@ model Attachment {
 
 // Evita reenviar la misma alerta de SLA más de una vez por día para un reclamo.
 model AlertLog {
-  id            Int      @id @default(autoincrement())
-  claim         Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
-  claimId       Int
-  thresholdDays Int
-  sentAt        DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  claim          Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+  claimId        Int
+  thresholdHours Int
+  sentAt         DateTime @default(now())
 
   @@index([claimId, sentAt])
   @@map("alert_logs")

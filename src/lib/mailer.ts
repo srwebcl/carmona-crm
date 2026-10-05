@@ -35,12 +35,12 @@ export async function sendMail(opts: { to: string; subject: string; html: string
     await t.sendMail({ from, to: opts.to, cc, subject: opts.subject, html: opts.html });
 }
 
-export function slaAlertEmail(params: { code: string; customerName: string; daysWithoutManagement: number; url: string }) {
+export function slaAlertEmail(params: { code: string; customerName: string; hoursWithoutManagement: number; url: string }) {
     return {
-        subject: `⚠️ Reclamo atrasado — ${params.code} sin gestión hace ${params.daysWithoutManagement} días hábiles`,
+        subject: `⚠️ Reclamo atrasado — ${params.code} sin gestión hace ${params.hoursWithoutManagement} horas`,
         html: `
             <p>El reclamo <strong>${params.code}</strong> del cliente <strong>${params.customerName}</strong>
-            lleva <strong>${params.daysWithoutManagement} días hábiles</strong> sin ninguna gestión registrada.</p>
+            lleva <strong>${params.hoursWithoutManagement} horas</strong> sin ninguna gestión registrada.</p>
             <p>Por favor ingresa a la plataforma y registra una acción o actualiza su estado:</p>
             <p><a href="${params.url}">${params.url}</a></p>
         `,

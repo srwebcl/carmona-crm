@@ -19,8 +19,9 @@ export async function register() {
     const cron = await import('node-cron');
     const { runSlaAlertCheck } = await import('./src/lib/alerts');
 
-    // Todos los días hábiles a las 09:00. Ajustable con SLA_CRON_SCHEDULE.
-    const schedule = process.env.SLA_CRON_SCHEDULE ?? '0 9 * * 1-5';
+    // Cada 6 horas, todos los días (el umbral de SLA es en horas de reloj
+    // corrido, no días hábiles). Ajustable con SLA_CRON_SCHEDULE.
+    const schedule = process.env.SLA_CRON_SCHEDULE ?? '0 */6 * * *';
 
     cron.default.schedule(
         schedule,
