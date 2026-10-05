@@ -32,6 +32,7 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
 
     const [pendingStatus, setPendingStatus] = useState(claim.status);
     const [showResolutionModal, setShowResolutionModal] = useState(false);
+    const [toast, setToast] = useState<string | null>(null);
     const [historyState, historyAction, historyPending] = useActionState(addHistoryEntry.bind(null, claim.id), initialState);
     const [statusState, statusAction, statusPending] = useActionState(changeClaimStatus.bind(null, claim.id), initialState);
     const [, startReassignTransition] = useTransition();
@@ -41,12 +42,21 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
     }, [claim.history.length]);
 
     useEffect(() => {
+        // Se depende del objeto completo (no de `.success`) porque la acción
+        // devuelve el mismo texto de éxito en cada guardado — comparar solo
+        // el string hace que React no detecte cambio del segundo guardado en
+        // adelante dentro de la misma sesión, y el formulario nunca se limpia.
         if (historyState.success) noteFormRef.current?.reset();
-    }, [historyState.success]);
+    }, [historyState]);
 
     useEffect(() => {
-        if (statusState.success) setShowResolutionModal(false);
-    }, [statusState.success]);
+        if (statusState.success) {
+            setShowResolutionModal(false);
+            setToast(statusState.success);
+            const timer = setTimeout(() => setToast(null), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [statusState]);
 
     const needsResolution = CLOSED_STATUSES.includes(pendingStatus as 'RESUELTO' | 'CERRADO');
 
@@ -175,6 +185,14 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                             </button>
                         </div>
                     </div>
+                </div>,
+                document.body,
+            )}
+
+            {toast && createPortal(
+                <div className="fixed top-5 right-5 z-[60] flex items-center bg-emerald-600 text-white px-4 py-3 rounded-xl shadow-xl">
+                    <CheckCircle2 size={18} className="mr-2 shrink-0" />
+                    <span className="text-sm font-bold">{toast}</span>
                 </div>,
                 document.body,
             )}
