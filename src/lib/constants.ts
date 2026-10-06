@@ -7,19 +7,23 @@ export const BRANDS = [
     'Honda', 'Jetour', 'Kaiyi', 'Karry', 'Maxus', 'MG', 'MINI', 'SEAT',
     'Soueast', 'Toyota', 'Volkswagen', 'Volvo',
     'Foton Camiones', 'Iveco', 'MAN', 'VW Camiones',
+    'Usados', 'Usados Premium',
 ] as const;
 
-export const AREAS = ['Ventas', 'Usados', 'Usados Premium', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos'] as const;
+// Usados/Usados Premium no son una marca de fábrica sino el área de venta de
+// vehículos usados — ahí se vende cualquier marca (incluso motos y camiones,
+// no solo el catálogo de autos nuevos). Cuando el reclamo se marca con una de
+// estas dos, el campo Modelo del formulario pasa a pedir "marca y modelo"
+// libremente (ver ClaimForm.tsx) en vez de asumir que la marca ya quedó fija
+// en el select. El valor de marca se mantiene igual para que el enrutamiento
+// por marca (ver routing.ts) siga funcionando para el responsable de Usados.
+export const USED_CAR_BRANDS = ['Usados', 'Usados Premium'] as const;
 
-// En Usados/Usados Premium se vende cualquier marca (incluyendo motos y
-// camiones), no solo las marcas oficiales que vende el concesionario nuevo —
-// por eso en esas áreas el campo Marca del formulario se abre a texto libre
-// en vez del listado fijo de BRANDS (ver ClaimForm.tsx).
-export const USED_CAR_AREAS = ['Usados', 'Usados Premium'] as const;
-
-export function isUsedCarArea(area: string): boolean {
-    return (USED_CAR_AREAS as readonly string[]).includes(area);
+export function isUsedCarBrand(brand: string | null): boolean {
+    return brand !== null && (USED_CAR_BRANDS as readonly string[]).includes(brand);
 }
+
+export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos'] as const;
 
 export const BRANCHES = ['La Serena', 'Copiapó'] as const;
 

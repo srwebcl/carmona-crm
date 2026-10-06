@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AREA_VALUES, BRAND_VALUES, BRANCH_VALUES, CHANNEL_VALUES, HISTORY_TYPE_VALUES, RESOLUTION_VALUES, STATUS_VALUES, isUsedCarArea } from './constants';
+import { AREA_VALUES, BRAND_VALUES, BRANCH_VALUES, CHANNEL_VALUES, HISTORY_TYPE_VALUES, RESOLUTION_VALUES, STATUS_VALUES } from './constants';
 import { isValidRut } from './rut';
 
 // Campos mínimos del cliente/vehículo/caso exigidos por el negocio al
@@ -28,20 +28,10 @@ const baseClaimFields = z.object({
 /** Agrega las reglas de "con/sin vehículo" a cualquier schema que extienda baseClaimFields. */
 function applyVehicleRules<T extends typeof baseClaimFields>(schema: T) {
     return schema
-        .refine(
-            (data) => {
-                if (data.noVehicle) return true;
-                // Usados/Usados Premium venden cualquier marca (incluso motos y
-                // camiones), así que ahí la marca es texto libre en vez de estar
-                // limitada al catálogo de marcas oficiales de autos nuevos.
-                if (isUsedCarArea(data.area)) return Boolean(data.brand);
-                return BRAND_VALUES.includes(data.brand ?? '');
-            },
-            {
-                message: 'Ingresa la marca del vehículo (o marca la casilla "sin vehículo").',
-                path: ['brand'],
-            },
-        )
+        .refine((data) => data.noVehicle || BRAND_VALUES.includes(data.brand ?? ''), {
+            message: 'Selecciona la marca del vehículo (o marca la casilla "sin vehículo").',
+            path: ['brand'],
+        })
         .refine((data) => data.noVehicle || Boolean(data.vehicleModel), {
             message: 'Ingresa el modelo del vehículo (o marca la casilla "sin vehículo").',
             path: ['vehicleModel'],
