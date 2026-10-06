@@ -18,7 +18,7 @@ interface DashboardProps {
 export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdHours, topBrands, topAreas, exportHref, isFiltered, searchBar }: DashboardProps) {
     return (
         <div className="space-y-8">
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div className="space-y-4">
                 <div>
                     <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control</h2>
                     <p className="text-slate-500 mt-1">
@@ -27,7 +27,7 @@ export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdHours
                             : 'Resumen del estado actual de los reclamos y métricas clave.'}
                     </p>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-start gap-2.5 overflow-x-auto">
                     {searchBar}
                     <a
                         href={exportHref}

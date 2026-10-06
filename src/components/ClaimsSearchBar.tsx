@@ -47,9 +47,9 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
 
     return (
         <div className="space-y-3">
-            <div className="flex flex-wrap gap-3">
+            <div className="flex items-center gap-2.5">
                 <form
-                    className="relative group"
+                    className="relative group min-w-0"
                     onSubmit={(e) => { e.preventDefault(); updateParam('q', q); }}
                 >
                     <Search className="absolute left-3.5 top-2.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
@@ -58,21 +58,23 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Buscar por cliente, N°, vehículo, área, sucursal, estado o responsable..."
-                        className="pl-10 pr-4 py-2.5 w-72 lg:w-96 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                        className="pl-10 pr-4 py-2.5 w-56 lg:w-80 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
                     />
                 </form>
                 <button
                     type="button"
                     onClick={() => setShowFilters((v) => !v)}
-                    className="flex items-center px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all font-medium text-sm shadow-sm"
+                    title="Filtrar"
+                    aria-label="Filtrar"
+                    className="flex items-center justify-center w-10 h-10 bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm shrink-0"
                 >
-                    <Filter size={16} className="mr-2" /> Filtrar
+                    <Filter size={16} />
                 </button>
                 {hasFilters && (
                     <button
                         type="button"
                         onClick={clearFilters}
-                        className="flex items-center px-3 py-2.5 text-slate-500 hover:text-red-600 text-sm font-medium"
+                        className="flex items-center px-3 py-2.5 text-slate-500 hover:text-red-600 text-sm font-medium shrink-0"
                     >
                         <X size={16} className="mr-1" /> Limpiar
                     </button>
