@@ -35,7 +35,8 @@ body {
 /* Flecha personalizada y consistente para todos los <select> nativos del
    CRM — el ícono nativo del navegador quedaba pegado al borde derecho sin
    aire visual. El padding-right lleva !important porque debe ganarle a las
-   utilidades px-*/p-* ya aplicadas en cada <select> del proyecto. */
+   utilidades de padding (px-, p-, etc) ya aplicadas en cada <select> del
+   proyecto. */
 select {
   appearance: none;
   -webkit-appearance: none;
