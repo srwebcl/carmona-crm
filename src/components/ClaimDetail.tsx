@@ -462,51 +462,64 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                                     ))}
                                 </div>
                             )}
-                            <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    title="Adjuntar archivo"
-                                    className={clsx(
-                                        'relative p-3 rounded-xl border transition-colors shrink-0 shadow-sm',
-                                        noteFiles.length > 0
-                                            ? 'text-indigo-600 bg-white border-indigo-200'
-                                            : 'text-slate-400 bg-white border-slate-200 hover:text-indigo-600',
-                                    )}
-                                >
-                                    <Paperclip size={20} />
-                                    {noteFiles.length > 0 && (
-                                        <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                                            {noteFiles.length}
-                                        </span>
-                                    )}
-                                </button>
-                                <input
-                                    type="file" name="attachments" ref={fileInputRef} className="hidden" multiple
-                                    onChange={handleNoteFilesChange}
-                                />
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                                <div className="flex items-start gap-2 sm:gap-3">
+                                    <div className="flex flex-col gap-1 shrink-0">
+                                        <span className="hidden sm:block h-[14px]" aria-hidden="true" />
+                                        <button
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            title="Adjuntar archivo"
+                                            className={clsx(
+                                                'relative p-3 rounded-xl border transition-colors shrink-0 shadow-sm',
+                                                noteFiles.length > 0
+                                                    ? 'text-indigo-600 bg-white border-indigo-200'
+                                                    : 'text-slate-400 bg-white border-slate-200 hover:text-indigo-600',
+                                            )}
+                                        >
+                                            <Paperclip size={20} />
+                                            {noteFiles.length > 0 && (
+                                                <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                                                    {noteFiles.length}
+                                                </span>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="file" name="attachments" ref={fileInputRef} className="hidden" multiple
+                                        onChange={handleNoteFilesChange}
+                                    />
 
-                                <div className="flex flex-col items-start gap-1 shrink-0">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-0.5">Tipo</span>
-                                    <select
-                                        name="type"
-                                        defaultValue="NOTA"
-                                        className="bg-white border border-slate-200 rounded-xl shadow-sm px-3 py-3 text-sm font-semibold text-slate-600 outline-none cursor-pointer"
-                                    >
-                                        {HISTORY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                                    </select>
+                                    <div className="flex flex-col gap-1 shrink-0">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-[14px] h-[14px] whitespace-nowrap">Tipo de Gestión</span>
+                                        <select
+                                            name="type"
+                                            defaultValue="NOTA"
+                                            className="bg-white border border-slate-200 rounded-xl shadow-sm px-3 py-3 text-sm font-semibold text-slate-600 outline-none cursor-pointer"
+                                        >
+                                            {HISTORY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <textarea
-                                    name="text"
-                                    required
-                                    placeholder="Escribe una nota interna, resolución o resumen de la gestión..."
-                                    className="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none resize-none max-h-40 min-h-[76px] text-sm text-slate-700"
-                                    rows={3}
-                                ></textarea>
-                                <button type="submit" disabled={historyPending} className="flex items-center justify-center bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white w-11 h-11 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shrink-0">
-                                    <Send size={18} className="translate-x-[-1px] translate-y-[1px]" />
-                                </button>
+                                <div className="flex items-center sm:items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                                    <div className="flex-1 flex flex-col gap-1 min-w-0">
+                                        <span className="hidden sm:block h-[14px]" aria-hidden="true" />
+                                        <textarea
+                                            name="text"
+                                            required
+                                            placeholder="Escribe una nota interna, resolución o resumen de la gestión..."
+                                            className="w-full bg-transparent border-none p-2 focus:ring-0 outline-none resize-none max-h-40 min-h-[76px] text-sm text-slate-700"
+                                            rows={3}
+                                        ></textarea>
+                                    </div>
+                                    <div className="flex flex-col gap-1 shrink-0">
+                                        <span className="hidden sm:block h-[14px]" aria-hidden="true" />
+                                        <button type="submit" disabled={historyPending} className="flex items-center justify-center bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white w-11 h-11 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shrink-0">
+                                            <Send size={18} className="translate-x-[-1px] translate-y-[1px]" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             {historyState.error && <p className="text-xs text-red-600 font-medium text-center">{historyState.error}</p>}
                         </form>
