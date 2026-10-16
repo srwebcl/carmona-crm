@@ -27,11 +27,11 @@ export function Dashboard({ total, abiertos, resueltos, vencidos, thresholdHours
                             : 'Resumen del estado actual de los reclamos y métricas clave.'}
                     </p>
                 </div>
-                <div className="flex items-start gap-2.5 overflow-x-auto">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2.5">
                     {searchBar}
                     <a
                         href={exportHref}
-                        className="flex items-center px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-medium text-sm shadow-sm shrink-0"
+                        className="flex items-center justify-center sm:justify-start px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all font-medium text-sm shadow-sm shrink-0"
                     >
                         <Download size={16} className="mr-2" />
                         {isFiltered ? 'Descargar filtrado (CSV)' : 'Descargar base completa (CSV)'}

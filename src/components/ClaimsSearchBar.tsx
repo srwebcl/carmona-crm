@@ -46,10 +46,10 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
     );
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-3 w-full sm:w-auto">
             <div className="flex items-center gap-2.5">
                 <form
-                    className="relative group min-w-0"
+                    className="relative group min-w-0 flex-1 sm:flex-initial"
                     onSubmit={(e) => { e.preventDefault(); updateParam('q', q); }}
                 >
                     <Search className="absolute left-3.5 top-2.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
@@ -58,7 +58,7 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
                         placeholder="Buscar por cliente, N°, vehículo, área, sucursal, estado o responsable..."
-                        className="pl-10 pr-4 py-2.5 w-56 lg:w-80 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                        className="w-full pl-10 pr-4 py-2.5 sm:w-56 lg:w-80 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
                     />
                 </form>
                 <button

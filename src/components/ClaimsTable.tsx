@@ -24,7 +24,54 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
 
     return (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Mobile: tarjetas apiladas — con 8 columnas la tabla es ilegible en pantallas angostas. */}
+            <div className="md:hidden divide-y divide-slate-100">
+                {claims.map((claim) => {
+                    const isOverdue = !CLOSED_STATUSES.includes(claim.status as 'RESUELTO' | 'CERRADO')
+                        && hoursBetween(claim.lastActionAt, new Date()) >= thresholdHours;
+
+                    return (
+                        <Link key={claim.id} href={`/reclamos/${claim.id}`} className="block p-4 active:bg-slate-50 transition-colors">
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                                <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md text-sm shrink-0">{claim.code}</span>
+                                <span className={clsx('px-2.5 py-1 rounded-full text-xs font-bold border shrink-0', getStatusStyle(claim.status))}>
+                                    {statusLabel(claim.status)}
+                                </span>
+                            </div>
+                            <p className="font-bold text-slate-800">{claim.customerName}</p>
+                            <p className="text-xs text-slate-500">{claim.email}</p>
+                            <p className="text-sm text-slate-600 mt-2">
+                                {claim.brand ? `${claim.brand} ${claim.vehicleModel}` : 'No aplica'} <span className="text-slate-400">·</span> {claim.area} <span className="text-slate-400">·</span> {claim.branch}
+                            </p>
+                            <div className="flex items-center justify-between mt-3">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                    <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[9px] font-bold shrink-0">
+                                        {claim.assignedTo.name.charAt(0)}
+                                    </div>
+                                    <span className="text-xs text-slate-600 font-medium truncate">{claim.assignedTo.name}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-slate-500 shrink-0">
+                                    {formatDate(claim.createdAt)}
+                                    {isOverdue && <AlertCircle size={13} className="text-red-500" />}
+                                    <ChevronRight size={16} className="text-slate-300" />
+                                </div>
+                            </div>
+                        </Link>
+                    );
+                })}
+                {claims.length === 0 && (
+                    <div className="p-12 text-center">
+                        <div className="flex flex-col items-center justify-center text-slate-400">
+                            <AlertCircle size={48} className="mb-4 text-slate-300" />
+                            <p className="text-lg font-medium text-slate-600">No hay tickets para mostrar</p>
+                            <p className="text-sm mt-1">Prueba ajustando la búsqueda o los filtros.</p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Tablet/desktop: tabla completa. */}
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
