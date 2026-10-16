@@ -94,11 +94,11 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                                     onChange={(e) => setBrand(e.target.value)}
                                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <optgroup label="Marcas Oficiales">
-                                        {officialBrands.map((b) => <option key={b} value={b}>{b}</option>)}
-                                    </optgroup>
                                     <optgroup label="Vehículos Usados">
                                         {USED_CAR_BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
+                                    </optgroup>
+                                    <optgroup label="Marcas Oficiales">
+                                        {officialBrands.map((b) => <option key={b} value={b}>{b}</option>)}
                                     </optgroup>
                                 </select>
                             </div>

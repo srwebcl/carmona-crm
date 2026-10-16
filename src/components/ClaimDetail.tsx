@@ -30,6 +30,7 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
     const noteFormRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const [noteFileNames, setNoteFileNames] = useState<string[]>([]);
     const [pendingStatus, setPendingStatus] = useState(claim.status);
     const [showResolutionModal, setShowResolutionModal] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
@@ -46,7 +47,10 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
         // devuelve el mismo texto de éxito en cada guardado — comparar solo
         // el string hace que React no detecte cambio del segundo guardado en
         // adelante dentro de la misma sesión, y el formulario nunca se limpia.
-        if (historyState.success) noteFormRef.current?.reset();
+        if (historyState.success) {
+            noteFormRef.current?.reset();
+            setNoteFileNames([]);
+        }
     }, [historyState]);
 
     useEffect(() => {
@@ -406,13 +410,44 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                         </div>
 
                         <form ref={noteFormRef} action={historyAction} className="p-4 bg-white border-t border-slate-100 space-y-2">
-                            <div className="flex items-end space-x-3 bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
-                                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-xl transition-colors shrink-0" title="Adjuntar archivo">
+                            {noteFileNames.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {noteFileNames.map((n) => (
+                                        <span key={n} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold px-2.5 py-1 rounded-lg">
+                                            <Paperclip size={12} /> {n}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    title="Adjuntar archivo"
+                                    className={clsx(
+                                        'relative p-3 rounded-xl border transition-colors shrink-0 shadow-sm',
+                                        noteFileNames.length > 0
+                                            ? 'text-indigo-600 bg-white border-indigo-200'
+                                            : 'text-slate-400 bg-white border-slate-200 hover:text-indigo-600',
+                                    )}
+                                >
                                     <Paperclip size={20} />
+                                    {noteFileNames.length > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                                            {noteFileNames.length}
+                                        </span>
+                                    )}
                                 </button>
-                                <input type="file" name="attachments" ref={fileInputRef} className="hidden" multiple />
+                                <input
+                                    type="file" name="attachments" ref={fileInputRef} className="hidden" multiple
+                                    onChange={(e) => setNoteFileNames(Array.from(e.target.files ?? []).map((f) => f.name))}
+                                />
 
-                                <select name="type" defaultValue="NOTA" className="bg-transparent text-sm font-semibold text-slate-600 outline-none shrink-0">
+                                <select
+                                    name="type"
+                                    defaultValue="NOTA"
+                                    className="bg-white border border-slate-200 rounded-xl shadow-sm px-3 py-3 text-sm font-semibold text-slate-600 outline-none shrink-0 cursor-pointer"
+                                >
                                     {HISTORY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                                 </select>
 
@@ -420,8 +455,8 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                                     name="text"
                                     required
                                     placeholder="Escribe una nota interna, resolución o resumen de la gestión..."
-                                    className="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none resize-none max-h-32 min-h-[44px] text-sm text-slate-700"
-                                    rows={1}
+                                    className="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none resize-none max-h-40 min-h-[76px] text-sm text-slate-700"
+                                    rows={3}
                                 ></textarea>
                                 <button type="submit" disabled={historyPending} className="bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white p-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex-shrink-0">
                                     <Send size={18} />
