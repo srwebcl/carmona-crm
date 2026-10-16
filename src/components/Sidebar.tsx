@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Ticket, Plus, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Ticket, Plus, Users, LogOut, X } from 'lucide-react';
 import clsx from 'clsx';
 import { logoutAction } from '@/actions/auth';
 import { Logo } from '@/components/Logo';
+import { useSidebar } from '@/components/SidebarContext';
 import type { User } from '@prisma/client';
 
 const NAV_ITEMS = [
@@ -17,51 +18,66 @@ const NAV_ITEMS = [
 
 export function Sidebar({ currentUser }: { currentUser: User }) {
     const pathname = usePathname();
+    const { isOpen, close } = useSidebar();
 
     return (
-        <div className="w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-20 transition-all duration-300">
-            <div className="p-6 flex items-center justify-center border-b border-slate-800">
-                <Logo width={170} />
-            </div>
-
-            <nav className="flex-1 px-4 py-6 space-y-2">
-                {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
-                    const active = match(pathname);
-                    return (
-                        <Link
-                            key={href}
-                            href={href}
-                            className={clsx(
-                                'w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 font-medium group',
-                                active
-                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200',
-                            )}
-                        >
-                            <Icon size={20} className={clsx('mr-3 transition-colors', active ? 'text-white' : 'text-slate-500 group-hover:text-indigo-400')} />
-                            {label}
-                        </Link>
-                    );
-                })}
-            </nav>
-
-            <div className="p-5 border-t border-slate-800 bg-slate-950/50 backdrop-blur-sm">
-                <div className="flex items-center mb-3">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
-                    <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Sesión Activa</p>
+        <>
+            {isOpen && (
+                <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={close} aria-hidden="true" />
+            )}
+            <div
+                className={clsx(
+                    'fixed lg:static inset-y-0 left-0 w-72 bg-slate-900 text-white flex flex-col shadow-2xl z-40 lg:z-20 transition-transform duration-300',
+                    isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+                )}
+            >
+                <div className="p-6 flex items-center justify-between lg:justify-center border-b border-slate-800">
+                    <Logo width={170} />
+                    <button type="button" onClick={close} title="Cerrar menú" className="lg:hidden p-1.5 text-slate-400 hover:text-white transition-colors shrink-0">
+                        <X size={22} />
+                    </button>
                 </div>
-                <div className="flex items-center justify-between bg-slate-800 rounded-lg border border-slate-700 p-3">
-                    <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
-                        <p className="text-xs text-slate-400 truncate">{currentUser.role}</p>
+
+                <nav className="flex-1 px-4 py-6 space-y-2">
+                    {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
+                        const active = match(pathname);
+                        return (
+                            <Link
+                                key={href}
+                                href={href}
+                                onClick={close}
+                                className={clsx(
+                                    'w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 font-medium group',
+                                    active
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200',
+                                )}
+                            >
+                                <Icon size={20} className={clsx('mr-3 transition-colors', active ? 'text-white' : 'text-slate-500 group-hover:text-indigo-400')} />
+                                {label}
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                <div className="p-5 border-t border-slate-800 bg-slate-950/50 backdrop-blur-sm">
+                    <div className="flex items-center mb-3">
+                        <div className="h-2 w-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
+                        <p className="text-xs text-slate-400 uppercase tracking-widest font-semibold">Sesión Activa</p>
                     </div>
-                    <form action={logoutAction}>
-                        <button type="submit" title="Cerrar sesión" className="p-2 text-slate-400 hover:text-red-400 transition-colors shrink-0">
-                            <LogOut size={18} />
-                        </button>
-                    </form>
+                    <div className="flex items-center justify-between bg-slate-800 rounded-lg border border-slate-700 p-3">
+                        <div className="min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
+                            <p className="text-xs text-slate-400 truncate">{currentUser.role}</p>
+                        </div>
+                        <form action={logoutAction}>
+                            <button type="submit" title="Cerrar sesión" className="p-2 text-slate-400 hover:text-red-400 transition-colors shrink-0">
+                                <LogOut size={18} />
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }

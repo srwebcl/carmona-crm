@@ -2,21 +2,27 @@ import { Bell } from 'lucide-react';
 import clsx from 'clsx';
 import type { User } from '@prisma/client';
 import type { Notification } from '@/lib/notifications';
+import { MobileMenuButton } from '@/components/MobileMenuButton';
 
 export function Header({ currentUser, notifications }: { currentUser: User; notifications: Notification[] }) {
     return (
-        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-8 shrink-0 sticky top-0 z-10 shadow-sm">
-            <div>
-                <h2 className="text-xl font-bold text-slate-800 flex items-center">
-                    Bienvenido de vuelta, <span className="text-indigo-600 ml-1.5">{currentUser.name.split(' ')[0]}</span>
-                    <span className="ml-3 px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full border border-slate-200">
-                        {currentUser.role}
-                    </span>
-                </h2>
-                <p className="text-sm text-slate-500 mt-0.5">Aquí tienes un resumen de la actividad de hoy.</p>
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 z-10 shadow-sm gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+                <MobileMenuButton />
+                <div className="min-w-0">
+                    <h2 className="text-base md:text-xl font-bold text-slate-800 flex items-center flex-wrap gap-x-2">
+                        <span className="truncate">
+                            Bienvenido de vuelta, <span className="text-indigo-600">{currentUser.name.split(' ')[0]}</span>
+                        </span>
+                        <span className="px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-full border border-slate-200 shrink-0">
+                            {currentUser.role}
+                        </span>
+                    </h2>
+                    <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">Aquí tienes un resumen de la actividad de hoy.</p>
+                </div>
             </div>
 
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3 md:space-x-6 shrink-0">
                 <div className="relative cursor-pointer group">
                     <div className="p-2.5 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors border border-slate-200 shadow-sm">
                         <Bell size={20} className="text-slate-600" />
