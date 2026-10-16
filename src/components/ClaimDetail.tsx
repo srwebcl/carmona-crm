@@ -12,6 +12,14 @@ import { formatDate, formatDateTime, formatDateTimeLong } from '@/lib/formatDate
 type HistoryWithAttachments = ClaimHistory & { attachments: Attachment[] };
 type ClaimWithRelations = Claim & { assignedTo: User; history: HistoryWithAttachments[]; attachments: Attachment[] };
 
+/** Reescribe el FileList real del input a partir de un arreglo de File — es la única forma de controlar qué archivos trae un <input type="file"> sin recrearlo. */
+function syncFileInput(input: HTMLInputElement | null, files: File[]) {
+    if (!input) return;
+    const dataTransfer = new DataTransfer();
+    for (const file of files) dataTransfer.items.add(file);
+    input.files = dataTransfer.files;
+}
+
 function getStatusStyle(s: string) {
     switch (s) {
         case 'NUEVO': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -30,7 +38,7 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
     const noteFormRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [noteFileNames, setNoteFileNames] = useState<string[]>([]);
+    const [noteFiles, setNoteFiles] = useState<File[]>([]);
     const [pendingStatus, setPendingStatus] = useState(claim.status);
     const [showResolutionModal, setShowResolutionModal] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
@@ -49,7 +57,7 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
         // adelante dentro de la misma sesión, y el formulario nunca se limpia.
         if (historyState.success) {
             noteFormRef.current?.reset();
-            setNoteFileNames([]);
+            setNoteFiles([]);
         }
     }, [historyState]);
 
@@ -63,6 +71,32 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
     }, [statusState]);
 
     const needsResolution = CLOSED_STATUSES.includes(pendingStatus as 'RESUELTO' | 'CERRADO');
+
+    // El input nativo reemplaza su selección completa cada vez que se vuelve a
+    // abrir el explorador de archivos — se fusiona con lo ya elegido (sin
+    // duplicar) para poder ir agregando adjuntos de a uno, y se reescribe el
+    // input para que el envío del formulario incluya el set acumulado.
+    function handleNoteFilesChange(e: ChangeEvent<HTMLInputElement>) {
+        const picked = Array.from(e.target.files ?? []);
+        setNoteFiles((prev) => {
+            const merged = [...prev];
+            for (const file of picked) {
+                if (!merged.some((f) => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)) {
+                    merged.push(file);
+                }
+            }
+            syncFileInput(fileInputRef.current, merged);
+            return merged;
+        });
+    }
+
+    function removeNoteFile(index: number) {
+        setNoteFiles((prev) => {
+            const next = prev.filter((_, i) => i !== index);
+            syncFileInput(fileInputRef.current, next);
+            return next;
+        });
+    }
 
     function handleStatusChange(e: ChangeEvent<HTMLSelectElement>) {
         const next = e.target.value;
@@ -410,11 +444,20 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                         </div>
 
                         <form ref={noteFormRef} action={historyAction} className="p-4 bg-white border-t border-slate-100 space-y-2">
-                            {noteFileNames.length > 0 && (
+                            {noteFiles.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
-                                    {noteFileNames.map((n) => (
-                                        <span key={n} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold px-2.5 py-1 rounded-lg">
-                                            <Paperclip size={12} /> {n}
+                                    {noteFiles.map((file, i) => (
+                                        <span key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold pl-2.5 pr-1.5 py-1 rounded-lg">
+                                            <Paperclip size={12} className="shrink-0" />
+                                            <span className="max-w-[220px] truncate">{file.name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeNoteFile(i)}
+                                                title="Quitar archivo"
+                                                className="p-0.5 rounded-full text-indigo-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                                            >
+                                                <X size={13} />
+                                            </button>
                                         </span>
                                     ))}
                                 </div>
@@ -426,30 +469,33 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                                     title="Adjuntar archivo"
                                     className={clsx(
                                         'relative p-3 rounded-xl border transition-colors shrink-0 shadow-sm',
-                                        noteFileNames.length > 0
+                                        noteFiles.length > 0
                                             ? 'text-indigo-600 bg-white border-indigo-200'
                                             : 'text-slate-400 bg-white border-slate-200 hover:text-indigo-600',
                                     )}
                                 >
                                     <Paperclip size={20} />
-                                    {noteFileNames.length > 0 && (
+                                    {noteFiles.length > 0 && (
                                         <span className="absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                                            {noteFileNames.length}
+                                            {noteFiles.length}
                                         </span>
                                     )}
                                 </button>
                                 <input
                                     type="file" name="attachments" ref={fileInputRef} className="hidden" multiple
-                                    onChange={(e) => setNoteFileNames(Array.from(e.target.files ?? []).map((f) => f.name))}
+                                    onChange={handleNoteFilesChange}
                                 />
 
-                                <select
-                                    name="type"
-                                    defaultValue="NOTA"
-                                    className="bg-white border border-slate-200 rounded-xl shadow-sm px-3 py-3 text-sm font-semibold text-slate-600 outline-none shrink-0 cursor-pointer"
-                                >
-                                    {HISTORY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                                </select>
+                                <div className="flex flex-col items-start gap-1 shrink-0">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide pl-0.5">Tipo</span>
+                                    <select
+                                        name="type"
+                                        defaultValue="NOTA"
+                                        className="bg-white border border-slate-200 rounded-xl shadow-sm px-3 py-3 text-sm font-semibold text-slate-600 outline-none cursor-pointer"
+                                    >
+                                        {HISTORY_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                    </select>
+                                </div>
 
                                 <textarea
                                     name="text"
@@ -458,8 +504,8 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                                     className="flex-1 bg-transparent border-none p-2 focus:ring-0 outline-none resize-none max-h-40 min-h-[76px] text-sm text-slate-700"
                                     rows={3}
                                 ></textarea>
-                                <button type="submit" disabled={historyPending} className="bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white p-3 rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex-shrink-0">
-                                    <Send size={18} />
+                                <button type="submit" disabled={historyPending} className="flex items-center justify-center bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white w-11 h-11 rounded-xl hover:bg-indigo-700 transition-colors shadow-md shrink-0">
+                                    <Send size={18} className="translate-x-[-1px] translate-y-[1px]" />
                                 </button>
                             </div>
                             {historyState.error && <p className="text-xs text-red-600 font-medium text-center">{historyState.error}</p>}
