@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useRef, useState, type ChangeEvent } from 'react';
 import { Plus, Paperclip } from 'lucide-react';
 import { BRANDS, AREAS, BRANCHES, CHANNELS, USED_CAR_BRANDS, isUsedCarBrand } from '@/lib/constants';
 import { Logo } from '@/components/Logo';
@@ -25,8 +25,24 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
     const [fileNames, setFileNames] = useState<string[]>([]);
     const [noVehicle, setNoVehicle] = useState(false);
     const [brand, setBrand] = useState<string>(BRANDS[0]);
+    const [rut, setRut] = useState('');
     const usedCarBrand = isUsedCarBrand(brand);
     const officialBrands = BRANDS.filter((b) => !(USED_CAR_BRANDS as readonly string[]).includes(b));
+
+    // El RUT siempre queda formateado como "12.345.678-9" mientras se
+    // escribe: se descarta todo lo que no sea dígito o "K" (dígito
+    // verificador), se limita a 8 dígitos de cuerpo + 1 verificador, y se
+    // van agregando los puntos y el guion automáticamente.
+    const handleRutChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const clean = e.target.value.replace(/[^0-9kK]/g, '').toUpperCase().slice(0, 9);
+        if (clean.length === 0) {
+            setRut('');
+            return;
+        }
+        const body = clean.slice(0, -1).replace(/\D/g, '');
+        const checkDigit = clean.slice(-1);
+        setRut(body.length === 0 ? checkDigit : `${body.replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${checkDigit}`);
+    };
 
     return (
         <div className="max-w-3xl mx-auto space-y-8">
@@ -62,7 +78,7 @@ export function ClaimForm({ action, isManual = false, title, subtitle, submitLab
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">RUT *</label>
-                                <input name="rut" required type="text" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="12.345.678-9" />
+                                <input name="rut" required type="text" value={rut} onChange={handleRutChange} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="12.345.678-9" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Teléfono *</label>
