@@ -15,7 +15,7 @@ Stack: **Next.js 16** (App Router) + **TypeScript** + **Prisma** (PostgreSQL/Neo
    ```bash
    npm install
    ```
-2. Copiar `.env.example` a `.env` y completar los valores (base de datos, `SESSION_SECRET`, SMTP, `UPLOADS_DIR`). Ver el detalle de cada variable en los comentarios del propio archivo.
+2. Copiar `.env.example` a `.env` y completar los valores (base de datos, `SESSION_SECRET`, `RESEND_API_KEY`, `UPLOADS_DIR`). Ver el detalle de cada variable en los comentarios del propio archivo.
 3. Aplicar el schema a la base de datos y cargar datos de ejemplo:
    ```bash
    npm run db:migrate   # crea las tablas
@@ -55,7 +55,7 @@ Pensado para revisión rápida y también apto para producción liviana. Requier
 
 1. **Base de datos**: Marketplace → Neon Postgres (`vercel integration add neon`). Provisiona `DATABASE_URL` automáticamente.
 2. **Adjuntos**: `vercel blob store add` — provisiona `BLOB_READ_WRITE_TOKEN`. Con esa variable presente, [src/lib/uploads.ts](src/lib/uploads.ts) guarda los archivos ahí en vez de disco (en Vercel no hay disco persistente). Nota: los adjuntos quedan en una URL pública no adivinable, pero — a diferencia de la ruta propia `/uploads/[...path]` usada al autoalojar — no exigen sesión para abrirse.
-3. **Variables propias** (`vercel env add <nombre> production`): `SESSION_SECRET`, `CRON_SECRET` (para `/api/cron/sla-check`, ver abajo), `SLA_HOURS`, `APP_URL` (la URL del deployment). SMTP es opcional — sin `SMTP_HOST` el mailer solo deja log, no rompe nada.
+3. **Variables propias** (`vercel env add <nombre> production`): `SESSION_SECRET`, `CRON_SECRET` (para `/api/cron/sla-check`, ver abajo), `SLA_HOURS`, `APP_URL` (la URL del deployment). `RESEND_API_KEY`/`MAIL_FROM`/`ADMIN_EMAIL` son opcionales — sin `RESEND_API_KEY` el mailer solo deja log, no rompe nada.
 4. Migrar y sembrar contra la BD de Vercel: `vercel env pull` (trae las env vars reales a `.env.local`) y luego `npm run db:migrate:deploy` + `npm run db:seed`.
 5. Alertas de SLA: `vercel.json` define un cron (`0 */6 * * *`, cada 6 horas, todos los días) que llama a `app/api/cron/sla-check/route.ts` — reemplaza al `node-cron` de `instrumentation.ts` (que se desactiva solo en Vercel, no hay proceso persistente donde correr un scheduler in-process).
 6. Deploy: `vercel --prod`, o simplemente hacer push a `main` una vez conectado el repo de GitHub al proyecto (`vercel git connect`).
@@ -65,7 +65,7 @@ Pensado para revisión rápida y también apto para producción liviana. Requier
 Requiere primero volver el schema a MySQL (ver [arriba](#motor-de-base-de-datos-postgresql-o-mysql)) si la cuenta no tiene Postgres.
 
 1. En el servidor: Node.js app + base de datos MySQL/Postgres provisionadas.
-2. Variables de entorno: las de `.env.example`, con `DATABASE_URL` apuntando a la BD de Cloudways, `SESSION_SECRET` único y largo, credenciales SMTP reales, y **`UPLOADS_DIR` como ruta absoluta persistente fuera de la carpeta del proyecto/build** (importante: el servidor `standalone` hace `chdir()` a `.next/standalone/` al arrancar, así que no puede depender de rutas relativas al cwd). Sin `BLOB_READ_WRITE_TOKEN`, los adjuntos usan automáticamente esta ruta en disco (ver [src/lib/uploads.ts](src/lib/uploads.ts)).
+2. Variables de entorno: las de `.env.example`, con `DATABASE_URL` apuntando a la BD de Cloudways, `SESSION_SECRET` único y largo, `RESEND_API_KEY` real, y **`UPLOADS_DIR` como ruta absoluta persistente fuera de la carpeta del proyecto/build** (importante: el servidor `standalone` hace `chdir()` a `.next/standalone/` al arrancar, así que no puede depender de rutas relativas al cwd). Sin `BLOB_READ_WRITE_TOKEN`, los adjuntos usan automáticamente esta ruta en disco (ver [src/lib/uploads.ts](src/lib/uploads.ts)).
 3. Build y arranque:
    ```bash
    npm run build

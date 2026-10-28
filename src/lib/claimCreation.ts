@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { prisma } from './prisma';
 import { autoAssignUser, buildClaimCode } from './routing';
 import { saveUploadedFiles } from './uploads';
+import { sendMail, newClaimNotificationEmail } from './mailer';
 import { SYSTEM_HISTORY_TYPES } from './constants';
 
 /**
@@ -66,6 +67,33 @@ export async function createClaim(data: {
             },
         ],
     });
+
+    // Aviso al admin principal y al responsable asignado — en un Set para no
+    // duplicar el envío cuando ambos son la misma persona (ej. el admin se
+    // auto-asigna porque nadie más calza con la marca/área/sucursal).
+    const recipients = new Set<string>();
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) recipients.add(adminEmail);
+    recipients.add(assignedTo.email);
+
+    try {
+        const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+        const email = newClaimNotificationEmail({
+            code,
+            customerName: data.customerName,
+            area: data.area,
+            brand: data.brand,
+            vehicleModel: data.vehicleModel,
+            description: data.description,
+            assignedToName: assignedTo.name,
+            url: `${appUrl}/reclamos/${claim.id}`,
+        });
+        await sendMail({ to: [...recipients], subject: email.subject, html: email.html });
+    } catch (err) {
+        // Un correo que falla no debe hacer fallar la creación del reclamo,
+        // que ya quedó guardada arriba.
+        console.error(`[createClaim] no se pudo enviar la notificación de nuevo reclamo para ${code}:`, err);
+    }
 
     return { ...claim, code };
 }
