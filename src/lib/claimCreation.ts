@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { prisma } from './prisma';
 import { autoAssignUser, buildClaimCode } from './routing';
 import { saveUploadedFiles } from './uploads';
-import { sendMail, newClaimNotificationEmail } from './mailer';
+import { sendMail, newClaimNotificationEmail, claimReceivedCustomerEmail } from './mailer';
 import { SYSTEM_HISTORY_TYPES } from './constants';
 
 /**
@@ -76,8 +76,9 @@ export async function createClaim(data: {
     if (adminEmail) recipients.add(adminEmail);
     recipients.add(assignedTo.email);
 
+    const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+
     try {
-        const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
         const email = newClaimNotificationEmail({
             code,
             customerName: data.customerName,
@@ -93,6 +94,24 @@ export async function createClaim(data: {
         // Un correo que falla no debe hacer fallar la creación del reclamo,
         // que ya quedó guardada arriba.
         console.error(`[createClaim] no se pudo enviar la notificación de nuevo reclamo para ${code}:`, err);
+    }
+
+    // Confirmación al cliente — en un try/catch separado del aviso interno
+    // de arriba: contenido y destinatario distintos, y un fallo en uno no
+    // debe impedir el envío del otro.
+    try {
+        const email = claimReceivedCustomerEmail({
+            code,
+            customerName: data.customerName,
+            area: data.area,
+            brand: data.brand,
+            vehicleModel: data.vehicleModel,
+            description: data.description,
+            logoUrl: `${appUrl}/logo-carmona-email.png`,
+        });
+        await sendMail({ to: data.email, subject: email.subject, html: email.html });
+    } catch (err) {
+        console.error(`[createClaim] no se pudo enviar la confirmación al cliente para ${code}:`, err);
     }
 
     return { ...claim, code };
