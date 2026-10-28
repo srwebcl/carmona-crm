@@ -2,11 +2,11 @@
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { randomUUID } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth';
-import { autoAssignUser, buildClaimCode, canAccessClaim } from '@/lib/routing';
-import { saveUploadedFiles, collectFiles } from '@/lib/uploads';
+import { canAccessClaim } from '@/lib/routing';
+import { collectFiles, saveUploadedFiles } from '@/lib/uploads';
+import { createClaim, attachFiles } from '@/lib/claimCreation';
 import { claimFieldsSchema, manualClaimSchema, historyEntrySchema, statusChangeSchema } from '@/lib/validation';
 import { sendMail, resolutionEmail } from '@/lib/mailer';
 import { resolutionLabel, CLOSED_STATUSES, SYSTEM_HISTORY_TYPES } from '@/lib/constants';
@@ -54,75 +54,6 @@ export async function createClaimManual(_prevState: ClaimFormState, formData: Fo
 
     revalidatePath('/reclamos');
     redirect(`/reclamos/${claim.id}`);
-}
-
-async function createClaim(data: {
-    customerName: string; rut: string; email: string; phone: string;
-    brand: string | null; vehicleModel: string | null; plate: string | null;
-    eventDate: Date; area: string; branch: string; description: string; expectedSolution: string;
-    channel: string; createdByName: string;
-}) {
-    const assignedTo = await autoAssignUser(data.brand, data.area, data.branch);
-    if (!assignedTo) throw new Error('No hay usuarios registrados para asignar el reclamo. Crea al menos un perfil en Equipo y Roles.');
-
-    const claim = await prisma.claim.create({
-        data: {
-            // Placeholder único (evita choques de concurrencia con la
-            // restricción @unique): el código real se deriva del id recién
-            // generado y se actualiza justo abajo, ya que buildClaimCode
-            // necesita el id, que solo existe después del insert.
-            code: `TEMP-${randomUUID()}`,
-            customerName: data.customerName,
-            rut: data.rut,
-            email: data.email,
-            phone: data.phone,
-            brand: data.brand,
-            vehicleModel: data.vehicleModel,
-            plate: data.plate,
-            eventDate: data.eventDate,
-            area: data.area,
-            branch: data.branch,
-            description: data.description,
-            expectedSolution: data.expectedSolution,
-            channel: data.channel,
-            status: 'NUEVO',
-            assignedToId: assignedTo.id,
-        },
-    });
-
-    // El código se deriva del id autoincremental una vez creado el registro.
-    const code = buildClaimCode(claim.id);
-    await prisma.claim.update({ where: { id: claim.id }, data: { code } });
-
-    await prisma.claimHistory.createMany({
-        data: [
-            {
-                claimId: claim.id,
-                userId: null,
-                authorName: 'Sistema',
-                type: SYSTEM_HISTORY_TYPES.CREACION,
-                text: `Reclamo ingresado por ${data.createdByName}.`,
-            },
-            {
-                claimId: claim.id,
-                userId: null,
-                authorName: 'Sistema',
-                type: SYSTEM_HISTORY_TYPES.ASIGNACION,
-                text: `Enrutado automáticamente a: ${assignedTo.name}.`,
-            },
-        ],
-    });
-
-    return { ...claim, code };
-}
-
-async function attachFiles(files: File[], claimId: number, uploadedByName: string) {
-    if (files.length === 0) return;
-    const saved = await saveUploadedFiles(files, claimId);
-    if (saved.length === 0) return;
-    await prisma.attachment.createMany({
-        data: saved.map((f) => ({ claimId, filename: f.filename, path: f.path, size: f.size, mimeType: f.mimeType, uploadedByName })),
-    });
 }
 
 /** Trae lo mínimo del reclamo para chequear visibilidad (punto 11) antes de dejar gestionarlo. */
