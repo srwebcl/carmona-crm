@@ -18,7 +18,7 @@ const PUBLIC_PREFIXES = ['/login', '/reclamo', '/api/health', '/api/cron', '/api
 // clientes, así que no tiene sentido exigirles sesión — y si se les exige
 // por error, el navegador intenta renderizar la página HTML de /login como
 // si fuera la imagen/ícono (roto, o "Unexpected token '<'" si es JS/CSS).
-const PUBLIC_STATIC_FILES = ['/favicon.svg', '/icons.svg', '/logo-carmona.avif'];
+const PUBLIC_STATIC_FILES = ['/favicon.svg', '/icons.svg', '/logo-carmona.avif', '/logo-carmona-email.png'];
 
 function isPublicPath(pathname: string) {
     // El `matcher` de abajo ya debería excluir los assets internos de Next
