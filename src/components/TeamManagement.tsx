@@ -147,9 +147,17 @@ export function TeamManagement({ users }: { users: User[] }) {
 
     // Llegar con ?edit=<id> (ej. desde el perfil en la franja superior) abre
     // directo el editor de ese usuario, sin tener que buscarlo en la tabla.
+    // Sin ese parámetro, siempre se ve primero el listado (ej. al entrar
+    // desde "Equipo y Roles" del menú después de haber usado el editor) —
+    // si no se resetea acá, el formulario quedaba "pegado" abierto entre
+    // navegaciones porque este componente no se remonta solo por el cambio
+    // de query string.
     useEffect(() => {
         const editId = Number(searchParams.get('edit'));
-        if (!editId) return;
+        if (!editId) {
+            closeForm();
+            return;
+        }
         const user = users.find((u) => u.id === editId);
         if (user) openEditForm(user);
         // eslint-disable-next-line react-hooks/exhaustive-deps
