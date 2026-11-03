@@ -9,6 +9,8 @@ export interface Notification {
     id: string;
     text: string;
     urgent?: boolean;
+    /** Reclamo al que apunta la notificación, para poder ir directo a gestionarlo. */
+    claimId: number;
 }
 
 /** Notificaciones para la campanita del header: nuevos sin revisar y SLA vencido, en todo lo que el usuario puede ver (ver canAccessClaim). */
@@ -25,12 +27,12 @@ export async function getNotifications(currentUser: User): Promise<Notification[
     const notifications: Notification[] = [];
     for (const claim of claims) {
         if (claim.status === 'NUEVO') {
-            notifications.push({ id: claim.code, text: `Nuevo reclamo sin revisar: ${claim.code}` });
+            notifications.push({ id: claim.code, text: `Nuevo reclamo sin revisar: ${claim.code}`, claimId: claim.id });
         }
         const lastActionDate = claim.history[0]?.createdAt ?? claim.createdAt;
         const hours = hoursBetween(lastActionDate, new Date());
         if (hours >= thresholdHours) {
-            notifications.push({ id: `${claim.code}-sla`, text: `Reclamo atrasado (≥${thresholdHours} horas sin gestión) en ${claim.code}`, urgent: true });
+            notifications.push({ id: `${claim.code}-sla`, text: `Reclamo atrasado (≥${thresholdHours} horas sin gestión) en ${claim.code}`, urgent: true, claimId: claim.id });
         }
     }
     return notifications;

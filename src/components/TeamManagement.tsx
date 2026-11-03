@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Shield, Plus, X, Pencil, Trash2 } from 'lucide-react';
 import type { User } from '@prisma/client';
 import { createUserAction, updateUserAction, deleteUserAction, type UserFormState, type DeleteUserState } from '@/actions/users';
@@ -109,6 +110,7 @@ function UserRow({ user, onEdit }: UserRowProps) {
 }
 
 export function TeamManagement({ users }: { users: User[] }) {
+    const searchParams = useSearchParams();
     const [showForm, setShowForm] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -142,6 +144,16 @@ export function TeamManagement({ users }: { users: User[] }) {
         setShowForm(false);
         setEditingUser(null);
     }
+
+    // Llegar con ?edit=<id> (ej. desde el perfil en la franja superior) abre
+    // directo el editor de ese usuario, sin tener que buscarlo en la tabla.
+    useEffect(() => {
+        const editId = Number(searchParams.get('edit'));
+        if (!editId) return;
+        const user = users.find((u) => u.id === editId);
+        if (user) openEditForm(user);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     return (
         <div className="space-y-6">

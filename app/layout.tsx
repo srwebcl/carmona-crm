@@ -12,7 +12,7 @@ const inter = Inter({
 export const metadata: Metadata = {
     title: 'Carmona CRM - Portal',
     description: 'Plataforma de gestión de reclamos Carmona',
-    icons: { icon: '/favicon.svg' },
+    icons: { icon: '/favicon-32.png', apple: '/favicon-180.png' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

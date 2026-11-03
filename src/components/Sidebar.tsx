@@ -70,7 +70,12 @@ export function Sidebar({ currentUser }: { currentUser: User }) {
                             <p className="text-sm font-bold text-white truncate">{currentUser.name}</p>
                             <p className="text-xs text-slate-400 truncate">{currentUser.role}</p>
                         </div>
-                        <form action={logoutAction}>
+                        <form
+                            action={logoutAction}
+                            onSubmit={(e) => {
+                                if (!window.confirm('¿Seguro que quieres cerrar sesión?')) e.preventDefault();
+                            }}
+                        >
                             <button type="submit" title="Cerrar sesión" className="p-2 text-slate-400 hover:text-red-400 transition-colors shrink-0">
                                 <LogOut size={18} />
                             </button>

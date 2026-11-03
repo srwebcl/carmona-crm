@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import clsx from 'clsx';
 import type { User } from '@prisma/client';
@@ -45,13 +46,13 @@ export function Header({ currentUser, notifications }: { currentUser: User; noti
                                     No tienes notificaciones pendientes.
                                 </div>
                             ) : notifications.map((n) => (
-                                <div key={n.id} className={clsx(
+                                <Link key={n.id} href={`/reclamos/${n.claimId}`} className={clsx(
                                     'p-4 text-sm border-b last:border-b-0 transition-colors flex items-start',
                                     n.urgent ? 'bg-red-50/50 hover:bg-red-50' : 'hover:bg-slate-50',
                                 )}>
                                     <div className={clsx('w-2 h-2 rounded-full mt-1.5 mr-3 shrink-0', n.urgent ? 'bg-red-500 animate-pulse' : 'bg-indigo-500')}></div>
                                     <span className={clsx(n.urgent ? 'text-red-800 font-medium' : 'text-slate-700')}>{n.text}</span>
-                                </div>
+                                </Link>
                             ))}
                         </div>
                     </div>
@@ -59,7 +60,7 @@ export function Header({ currentUser, notifications }: { currentUser: User; noti
 
                 <div className="h-8 w-px bg-slate-200"></div>
 
-                <div className="flex items-center space-x-3">
+                <Link href={`/equipo?edit=${currentUser.id}`} title="Editar mi perfil" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                     <div className="text-right hidden md:block">
                         <p className="text-sm font-bold text-slate-800">{currentUser.name}</p>
                         <p className="text-xs text-slate-500">{currentUser.email}</p>
@@ -67,7 +68,7 @@ export function Header({ currentUser, notifications }: { currentUser: User; noti
                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
                         {currentUser.name.charAt(0)}
                     </div>
-                </div>
+                </Link>
             </div>
         </header>
     );
