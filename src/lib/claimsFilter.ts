@@ -1,6 +1,7 @@
 import 'server-only';
 import type { Prisma, User } from '@prisma/client';
-import { isGerenciaRole, STATUSES } from './constants';
+import { STATUSES } from './constants';
+import { hasFullAccess } from './routing';
 
 /**
  * Filtros de búsqueda compartidos entre el listado de reclamos, el Dashboard
@@ -17,29 +18,13 @@ export interface ClaimsFilterParams {
 }
 
 /**
- * Traduce la regla de visibilidad cruzada de canAccessClaim() (ver
- * src/lib/routing.ts) a un `where` de Prisma: Gerencia ve todo; el resto ve
- * lo que tiene asignado MÁS cualquier reclamo cuya marca/área/sucursal
- * calce con lo que administra, aunque no sea el asignado (punto 11).
+ * Traduce la regla de acceso de canAccessClaim() (ver src/lib/routing.ts) a
+ * un `where` de Prisma: el admin y el desarrollador ven todo; el resto solo
+ * ve lo que tiene asignado.
  */
 function visibilityWhere(user: User): Prisma.ClaimWhereInput {
-    if (isGerenciaRole(user.role)) return {};
-
-    const brands = (user.brands as string[]) ?? [];
-    const areas = (user.areas as string[]) ?? [];
-    const branches = (user.branches as string[]) ?? [];
-
-    const matchConditions: Prisma.ClaimWhereInput[] = [];
-    if (!brands.includes('Todas')) matchConditions.push({ OR: [{ brand: null }, { brand: { in: brands } }] });
-    if (!areas.includes('Todas')) matchConditions.push({ area: { in: areas } });
-    if (!branches.includes('Todas')) matchConditions.push({ branch: { in: branches } });
-
-    return {
-        OR: [
-            { assignedToId: user.id },
-            matchConditions.length > 0 ? { AND: matchConditions } : {},
-        ],
-    };
+    if (hasFullAccess(user)) return {};
+    return { assignedToId: user.id };
 }
 
 /** Arma el `where` de Prisma según el filtro y la visibilidad por rol/coincidencia (ver canAccessClaim). */
@@ -48,9 +33,9 @@ export function buildClaimsWhere(currentUser: User, { q, brand, area, assignedTo
 
     if (brand) conditions.push({ brand });
     if (area) conditions.push({ area });
-    // El filtro por responsable solo lo puede usar Gerencia (ver
+    // El filtro por responsable solo lo puede usar quien ve todo (ver
     // ClaimsSearchBar) — para el resto su propia visibilidad ya viene acotada.
-    if (assignedToId && isGerenciaRole(currentUser.role)) conditions.push({ assignedToId: Number(assignedToId) });
+    if (assignedToId && hasFullAccess(currentUser)) conditions.push({ assignedToId: Number(assignedToId) });
     if (q) {
         // Busca por cualquiera de las columnas visibles en la tabla de
         // tickets (ID, cliente, vehículo/área, sucursal, estado,

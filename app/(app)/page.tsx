@@ -1,8 +1,9 @@
 import { Suspense } from 'react';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { CLOSED_STATUSES, DEFAULT_SLA_HOURS, isGerenciaRole } from '@/lib/constants';
+import { CLOSED_STATUSES, DEFAULT_SLA_HOURS } from '@/lib/constants';
 import { hoursBetween } from '@/lib/hours';
+import { hasFullAccess } from '@/lib/routing';
 import { buildClaimsWhere, buildClaimsQueryString, type ClaimsFilterParams } from '@/lib/claimsFilter';
 import { Dashboard } from '@/components/Dashboard';
 import { ClaimsSearchBar } from '@/components/ClaimsSearchBar';
@@ -11,7 +12,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     const currentUser = await requireUser();
     const filters = await searchParams;
     const where = buildClaimsWhere(currentUser, filters);
-    const showResponsable = isGerenciaRole(currentUser.role);
+    const showResponsable = hasFullAccess(currentUser);
 
     const [claims, responsables] = await Promise.all([
         prisma.claim.findMany({

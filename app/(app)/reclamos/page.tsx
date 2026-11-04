@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { isGerenciaRole } from '@/lib/constants';
+import { hasFullAccess } from '@/lib/routing';
 import { buildClaimsWhere, type ClaimsFilterParams } from '@/lib/claimsFilter';
 import { ClaimsSearchBar } from '@/components/ClaimsSearchBar';
 import { ClaimsTable } from '@/components/ClaimsTable';
@@ -10,7 +10,7 @@ export default async function ReclamosPage({ searchParams }: { searchParams: Pro
     const currentUser = await requireUser();
     const filters = await searchParams;
     const where = buildClaimsWhere(currentUser, filters);
-    const showResponsable = isGerenciaRole(currentUser.role);
+    const showResponsable = hasFullAccess(currentUser);
 
     const [claims, responsables] = await Promise.all([
         prisma.claim.findMany({

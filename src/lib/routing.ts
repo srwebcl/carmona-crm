@@ -1,7 +1,27 @@
 import 'server-only';
 import type { Claim, User } from '@prisma/client';
 import { prisma } from './prisma';
-import { isGerenciaRole } from './constants';
+
+// Identidades con acceso total (ver todo, gestionar todo, reasignar,
+// crear usuarios): el admin del negocio y el desarrollador. Se identifican
+// por correo (no por rol, que es texto libre editable por cualquiera desde
+// Equipo y Roles) para que no baste con escribir un cargo "parecido" para
+// ganar accesos que no corresponden.
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL?.toLowerCase();
+const DEVELOPER_EMAIL = (process.env.DEVELOPER_EMAIL || 'contacto@srweb.cl').toLowerCase();
+
+export function isAdminUser(user: Pick<User, 'email'>): boolean {
+    return Boolean(ADMIN_EMAIL) && user.email.toLowerCase() === ADMIN_EMAIL;
+}
+
+export function isGhostUser(user: Pick<User, 'email'>): boolean {
+    return user.email.toLowerCase() === DEVELOPER_EMAIL;
+}
+
+/** Ve y gestiona cualquier reclamo, puede reasignar y crear usuarios. El resto son perfiles secundarios. */
+export function hasFullAccess(user: Pick<User, 'email'>): boolean {
+    return isAdminUser(user) || isGhostUser(user);
+}
 
 /**
  * Compara las marcas/áreas/sucursales que administra un usuario contra los
@@ -28,28 +48,28 @@ function matchesClaim(user: Pick<User, 'brands' | 'areas' | 'branches'>, claim: 
 
 /**
  * Enrutamiento automático: elige al responsable principal de un reclamo
- * nuevo según marca + área + sucursal. Gerencia queda fuera de la selección
- * automática (ve todo igual, pero no se le asignan reclamos uno a uno). Si
- * nadie calza, cae al primer usuario registrado como responsable por defecto.
+ * nuevo según marca + área + sucursal. El admin y el desarrollador quedan
+ * fuera de la selección por calce (no se les asigna "porque su marca es
+ * Todas") — el admin solo entra como respaldo final si nadie más calza.
  */
 export async function autoAssignUser(brand: string | null, area: string, branch: string) {
     const users = await prisma.user.findMany({ orderBy: { id: 'asc' } });
+    const candidates = users.filter((u) => !hasFullAccess(u));
 
-    const match = users.find((u) => u.role !== 'Gerencia' && matchesClaim(u, { brand, area, branch }));
+    const match = candidates.find((u) => matchesClaim(u, { brand, area, branch }));
+    if (match) return match;
 
-    return match ?? users[0] ?? null;
+    const admin = users.find((u) => isAdminUser(u));
+    return admin ?? users[0] ?? null;
 }
 
 /**
- * Visibilidad/gestión cruzada (punto 11): un reclamo no es solo para su
- * asignado — cualquier perfil cuyas marcas/áreas/sucursales calcen también
- * puede verlo y gestionarlo desde su panel, igual que el que auto-asigna.
- * Gerencia ve y gestiona todo sin restricción.
+ * Un reclamo solo lo ve y gestiona su asignado — salvo el admin y el
+ * desarrollador, que ven y gestionan cualquiera sin restricción.
  */
-export function canAccessClaim(user: User, claim: Pick<Claim, 'assignedToId' | 'brand' | 'area' | 'branch'>): boolean {
-    if (isGerenciaRole(user.role)) return true;
-    if (claim.assignedToId === user.id) return true;
-    return matchesClaim(user, claim);
+export function canAccessClaim(user: User, claim: Pick<Claim, 'assignedToId'>): boolean {
+    if (hasFullAccess(user)) return true;
+    return claim.assignedToId === user.id;
 }
 
 /** Genera el código visible del reclamo a partir de su id autoincremental. */

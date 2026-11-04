@@ -33,7 +33,7 @@ function getStatusStyle(s: string) {
 
 const initialState: ClaimFormState = {};
 
-export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users: User[] }) {
+export function ClaimDetail({ claim, users, canReassign }: { claim: ClaimWithRelations; users: User[]; canReassign: boolean }) {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const noteFormRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -320,17 +320,19 @@ export function ClaimDetail({ claim, users }: { claim: ClaimWithRelations; users
                                         <p className="font-bold text-slate-700">{claim.assignedTo.name}</p>
                                     </div>
                                 </div>
-                                <form
-                                    action={(formData) => startReassignTransition(() => reassignClaim(claim.id, formData))}
-                                    className="flex items-center gap-2 mt-2"
-                                >
-                                    <select name="assignedToId" defaultValue={claim.assignedToId} className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
-                                        {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                    </select>
-                                    <button type="submit" className="px-2.5 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition-colors shrink-0">
-                                        Reasignar
-                                    </button>
-                                </form>
+                                {canReassign && (
+                                    <form
+                                        action={(formData) => startReassignTransition(() => reassignClaim(claim.id, formData))}
+                                        className="flex items-center gap-2 mt-2"
+                                    >
+                                        <select name="assignedToId" defaultValue={claim.assignedToId} className="flex-1 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
+                                            {users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                        </select>
+                                        <button type="submit" className="px-2.5 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition-colors shrink-0">
+                                            Reasignar
+                                        </button>
+                                    </form>
+                                )}
                             </div>
                         </div>
                     </div>

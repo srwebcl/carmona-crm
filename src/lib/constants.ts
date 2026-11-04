@@ -104,8 +104,3 @@ export function historyTypeLabel(value: string): string {
 // Horas sin gestión antes de disparar la alerta automática por correo y de
 // contar un reclamo como atrasado. Reloj corrido (no son horas hábiles).
 export const DEFAULT_SLA_HOURS = 48;
-
-/** Gerencia/Admin ve todos los reclamos; el resto solo los suyos (ver ClaimsList/notifications). */
-export function isGerenciaRole(role: string): boolean {
-    return role === 'Gerencia';
-}

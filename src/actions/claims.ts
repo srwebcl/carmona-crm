@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth';
-import { canAccessClaim } from '@/lib/routing';
+import { canAccessClaim, hasFullAccess } from '@/lib/routing';
 import { collectFiles, saveUploadedFiles } from '@/lib/uploads';
 import { createClaim, attachFiles } from '@/lib/claimCreation';
 import { claimFieldsSchema, manualClaimSchema, historyEntrySchema, statusChangeSchema } from '@/lib/validation';
@@ -56,7 +56,7 @@ export async function createClaimManual(_prevState: ClaimFormState, formData: Fo
     redirect(`/reclamos/${claim.id}`);
 }
 
-/** Trae lo mínimo del reclamo para chequear visibilidad (punto 11) antes de dejar gestionarlo. */
+/** Trae el reclamo y chequea que el usuario pueda gestionarlo (ver canAccessClaim) antes de dejarlo. */
 async function requireClaimAccess(claimId: number, currentUser: Awaited<ReturnType<typeof requireUser>>) {
     const claim = await prisma.claim.findUniqueOrThrow({ where: { id: claimId } });
     if (!canAccessClaim(currentUser, claim)) return null;
@@ -161,9 +161,10 @@ export async function changeClaimStatus(claimId: number, _prevState: ClaimFormSt
     return { success: 'Estado actualizado.' };
 }
 
-/** Reasignación manual del reclamo a otra jefatura/responsable (requisito 5). */
+/** Reasignación manual del reclamo a otra jefatura/responsable (requisito 5). Solo el admin/desarrollador puede reasignar. */
 export async function reassignClaim(claimId: number, formData: FormData) {
     const currentUser = await requireUser();
+    if (!hasFullAccess(currentUser)) return;
     const claim = await requireClaimAccess(claimId, currentUser);
     if (!claim) return;
 

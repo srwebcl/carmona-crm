@@ -195,7 +195,7 @@ export function TeamManagement({ users }: { users: User[] }) {
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Cargo / Rol *</label>
-                                <input name="role" required type="text" defaultValue={editingUser?.role} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Jefe Ventas Usados (usar &quot;Gerencia&quot; para ver todos los reclamos)" />
+                                <input name="role" required type="text" defaultValue={editingUser?.role} className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Jefe Ventas Usados" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1.5">Correo Corporativo *</label>
