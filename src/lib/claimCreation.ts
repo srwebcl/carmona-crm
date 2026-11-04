@@ -63,7 +63,7 @@ export async function createClaim(data: {
                 userId: null,
                 authorName: 'Sistema',
                 type: SYSTEM_HISTORY_TYPES.ASIGNACION,
-                text: `Enrutado automáticamente a: ${assignedTo.name}.`,
+                text: `Asignado automáticamente a: ${assignedTo.name}.`,
             },
         ],
     });
