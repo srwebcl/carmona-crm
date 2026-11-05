@@ -3,9 +3,13 @@ import { Bell } from 'lucide-react';
 import clsx from 'clsx';
 import type { User } from '@prisma/client';
 import type { Notification } from '@/lib/notifications';
+import { hasFullAccess } from '@/lib/routing';
 import { MobileMenuButton } from '@/components/MobileMenuButton';
 
 export function Header({ currentUser, notifications }: { currentUser: User; notifications: Notification[] }) {
+    // El editor de perfil vive en /equipo, bloqueado para perfiles
+    // secundarios — para ellos el bloque de perfil queda solo informativo.
+    const canEditProfile = hasFullAccess(currentUser);
     return (
         <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 z-10 shadow-sm gap-3">
             <div className="flex items-center gap-3 min-w-0">
@@ -60,15 +64,27 @@ export function Header({ currentUser, notifications }: { currentUser: User; noti
 
                 <div className="h-8 w-px bg-slate-200"></div>
 
-                <Link href={`/equipo?edit=${currentUser.id}`} title="Editar mi perfil" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                    <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-slate-800">{currentUser.name}</p>
-                        <p className="text-xs text-slate-500">{currentUser.email}</p>
+                {canEditProfile ? (
+                    <Link href={`/equipo?edit=${currentUser.id}`} title="Editar mi perfil" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+                        <div className="text-right hidden md:block">
+                            <p className="text-sm font-bold text-slate-800">{currentUser.name}</p>
+                            <p className="text-xs text-slate-500">{currentUser.email}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
+                            {currentUser.name.charAt(0)}
+                        </div>
+                    </Link>
+                ) : (
+                    <div className="flex items-center space-x-3">
+                        <div className="text-right hidden md:block">
+                            <p className="text-sm font-bold text-slate-800">{currentUser.name}</p>
+                            <p className="text-xs text-slate-500">{currentUser.email}</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
+                            {currentUser.name.charAt(0)}
+                        </div>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white">
-                        {currentUser.name.charAt(0)}
-                    </div>
-                </Link>
+                )}
             </div>
         </header>
     );

@@ -10,15 +10,16 @@ import { useSidebar } from '@/components/SidebarContext';
 import type { User } from '@prisma/client';
 
 const NAV_ITEMS = [
-    { href: '/', label: 'Panel de Control', icon: LayoutDashboard, match: (p: string) => p === '/' },
-    { href: '/reclamos', label: 'Tickets y Reclamos', icon: Ticket, match: (p: string) => p.startsWith('/reclamos') && p !== '/reclamos/nuevo' },
-    { href: '/reclamos/nuevo', label: 'Ingresar Reclamo', icon: Plus, match: (p: string) => p === '/reclamos/nuevo' },
-    { href: '/equipo', label: 'Equipo y Roles', icon: Users, match: (p: string) => p === '/equipo' },
+    { href: '/', label: 'Panel de Control', icon: LayoutDashboard, match: (p: string) => p === '/', fullAccessOnly: false },
+    { href: '/reclamos', label: 'Tickets y Reclamos', icon: Ticket, match: (p: string) => p.startsWith('/reclamos') && p !== '/reclamos/nuevo', fullAccessOnly: false },
+    { href: '/reclamos/nuevo', label: 'Ingresar Reclamo', icon: Plus, match: (p: string) => p === '/reclamos/nuevo', fullAccessOnly: false },
+    { href: '/equipo', label: 'Equipo y Roles', icon: Users, match: (p: string) => p === '/equipo', fullAccessOnly: true },
 ];
 
-export function Sidebar({ currentUser }: { currentUser: User }) {
+export function Sidebar({ currentUser, canManageTeam }: { currentUser: User; canManageTeam: boolean }) {
     const pathname = usePathname();
     const { isOpen, close } = useSidebar();
+    const navItems = NAV_ITEMS.filter((item) => !item.fullAccessOnly || canManageTeam);
 
     return (
         <>
@@ -39,7 +40,7 @@ export function Sidebar({ currentUser }: { currentUser: User }) {
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2">
-                    {NAV_ITEMS.map(({ href, label, icon: Icon, match }) => {
+                    {navItems.map(({ href, label, icon: Icon, match }) => {
                         const active = match(pathname);
                         return (
                             <Link

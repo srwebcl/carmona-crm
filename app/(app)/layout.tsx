@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { requireUser } from '@/lib/auth';
 import { getNotifications } from '@/lib/notifications';
+import { hasFullAccess } from '@/lib/routing';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { SidebarProvider } from '@/components/SidebarContext';
@@ -18,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </div>
 
                 <Suspense fallback={null}>
-                    <Sidebar currentUser={currentUser} />
+                    <Sidebar currentUser={currentUser} canManageTeam={hasFullAccess(currentUser)} />
                 </Suspense>
 
                 <div className="flex-1 flex flex-col h-screen relative z-10 min-w-0">
