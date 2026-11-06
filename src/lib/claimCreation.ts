@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { prisma } from './prisma';
-import { autoAssignUser, buildClaimCode } from './routing';
+import { autoAssignUser, buildClaimCode, findMatchingUsers } from './routing';
 import { saveUploadedFiles } from './uploads';
 import { sendMail, newClaimNotificationEmail, claimReceivedCustomerEmail } from './mailer';
 import { SYSTEM_HISTORY_TYPES } from './constants';
@@ -68,13 +68,16 @@ export async function createClaim(data: {
         ],
     });
 
-    // Aviso al admin principal y al responsable asignado — en un Set para no
-    // duplicar el envío cuando ambos son la misma persona (ej. el admin se
-    // auto-asigna porque nadie más calza con la marca/área/sucursal).
+    // Aviso al admin principal, al responsable asignado y a cualquier otro
+    // perfil cuyo alcance (marca/área/sucursal) calce con el reclamo (ej. un
+    // gerente que supervisa esa marca, aunque el dueño formal sea la
+    // jefatura puntual) — en un Set para no duplicar envíos.
+    const matchingUsers = await findMatchingUsers(data.brand, data.area, data.branch);
     const recipients = new Set<string>();
     const adminEmail = process.env.ADMIN_EMAIL;
     if (adminEmail) recipients.add(adminEmail);
     recipients.add(assignedTo.email);
+    for (const u of matchingUsers) recipients.add(u.email);
 
     const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
 

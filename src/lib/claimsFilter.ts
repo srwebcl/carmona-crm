@@ -1,7 +1,7 @@
 import 'server-only';
 import type { Prisma, User } from '@prisma/client';
 import { STATUSES } from './constants';
-import { hasFullAccess } from './routing';
+import { claimScopeWhere, hasFullAccess } from './routing';
 
 /**
  * Filtros de búsqueda compartidos entre el listado de reclamos, el Dashboard
@@ -19,12 +19,13 @@ export interface ClaimsFilterParams {
 
 /**
  * Traduce la regla de acceso de canAccessClaim() (ver src/lib/routing.ts) a
- * un `where` de Prisma: el admin y el desarrollador ven todo; el resto solo
- * ve lo que tiene asignado.
+ * un `where` de Prisma: el admin y el desarrollador ven todo; el resto ve lo
+ * que tiene asignado, más cualquier reclamo dentro de su propio alcance de
+ * marca/área/sucursal (ej. un gerente ve lo de las jefaturas que supervisa).
  */
 function visibilityWhere(user: User): Prisma.ClaimWhereInput {
     if (hasFullAccess(user)) return {};
-    return { assignedToId: user.id };
+    return { OR: [{ assignedToId: user.id }, claimScopeWhere(user)] };
 }
 
 /** Arma el `where` de Prisma según el filtro y la visibilidad por rol/coincidencia (ver canAccessClaim). */

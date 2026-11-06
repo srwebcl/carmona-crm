@@ -20,8 +20,9 @@ export default async function ClaimDetailPage({ params }: { params: Promise<{ id
     });
     if (!claim) notFound();
 
-    // Solo el asignado puede ver/gestionar el reclamo — salvo el admin y el
-    // desarrollador, que acceden a cualquiera.
+    // El asignado, y cualquier perfil cuyo alcance calce con el reclamo
+    // (ver canAccessClaim), puede ver/gestionar el reclamo — salvo el admin
+    // y el desarrollador, que acceden a cualquiera.
     if (!canAccessClaim(currentUser, claim)) {
         notFound();
     }
