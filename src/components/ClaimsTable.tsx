@@ -77,7 +77,7 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                         <tr className="bg-slate-50/80 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                             <th className="p-4 pl-6 font-semibold">ID Ticket</th>
                             <th className="p-4 font-semibold">Cliente</th>
-                            <th className="p-4 font-semibold">Vehículo & Área</th>
+                            <th className="p-4 font-semibold">Área</th>
                             <th className="p-4 font-semibold">Sucursal</th>
                             <th className="p-4 font-semibold">Estado</th>
                             <th className="p-4 font-semibold">Responsable</th>
@@ -95,16 +95,13 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                                     <td className="p-4 pl-6">
                                         <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md text-sm group-hover:bg-indigo-100 transition-colors">{claim.code}</span>
                                     </td>
-                                    <td className="p-4">
-                                        <p className="font-bold text-slate-800">{claim.customerName}</p>
-                                        <p className="text-xs text-slate-500 mt-0.5">{claim.email}</p>
+                                    <td className="p-4 max-w-[220px]">
+                                        <p className="truncate text-sm" title={`${claim.customerName} · ${claim.email}`}>
+                                            <span className="font-bold text-slate-800">{claim.customerName}</span>{' '}
+                                            <span className="text-slate-400">· {claim.email}</span>
+                                        </p>
                                     </td>
-                                    <td className="p-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold text-slate-700">{claim.brand ? `${claim.brand} ${claim.vehicleModel}` : 'No aplica'}</span>
-                                            <span className="text-xs text-slate-500">{claim.area}</span>
-                                        </div>
-                                    </td>
+                                    <td className="p-4 text-sm font-semibold text-slate-700">{claim.area}</td>
                                     <td className="p-4 text-sm text-slate-600">{claim.branch}</td>
                                     <td className="p-4">
                                         <span className={clsx('px-3 py-1.5 rounded-full text-xs font-bold border', getStatusStyle(claim.status))}>

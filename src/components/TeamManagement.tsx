@@ -47,17 +47,18 @@ function ToggleGroup({ label, name, options, selected, onToggle, activeClassName
 }
 
 /**
- * Muestra como máximo 3 etiquetas y agrupa el resto en un "+N" con el detalle
- * en el title — con 15+ marcas disponibles, listar todas las seleccionadas
- * hacía que la fila de la tabla creciera a 2-3 líneas de alto por usuario.
+ * Muestra una sola etiqueta y agrupa el resto en un "+N" con el detalle en el
+ * title — con 15+ marcas disponibles y nombres largos (ej. "Desabolladura y
+ * Pintura"), mostrar más de una etiqueta seguía desbordando la fila a 2
+ * líneas; con una sola, la fila queda siempre en una línea.
  */
 function PillList({ items, className }: { items: string[]; className: string }) {
-    const MAX_VISIBLE = 3;
+    const MAX_VISIBLE = 1;
     const visible = items.slice(0, MAX_VISIBLE);
     const restCount = items.length - visible.length;
 
     return (
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex flex-nowrap items-center gap-1 overflow-hidden">
             {visible.map((item) => <span key={item} className={className}>{item}</span>)}
             {restCount > 0 && (
                 <span
@@ -87,15 +88,15 @@ function UserRow({ user, onEdit }: UserRowProps) {
 
     return (
         <tr className="hover:bg-slate-50/80 transition-colors">
-            <td className="p-4 pl-6">
+            <td className="p-4 pl-6 max-w-[220px]">
                 <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-bold mr-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white flex items-center justify-center text-xs font-bold mr-3 shrink-0">
                         {user.name.charAt(0)}
                     </div>
-                    <div>
-                        <span className="font-bold text-slate-800 block">{user.name}</span>
-                        <span className="text-xs text-slate-400">{user.email}</span>
-                    </div>
+                    <p className="truncate text-sm min-w-0 flex-1" title={`${user.name} · ${user.email}`}>
+                        <span className="font-bold text-slate-800">{user.name}</span>{' '}
+                        <span className="text-slate-400">· {user.email}</span>
+                    </p>
                 </div>
             </td>
             <td className="p-4">
