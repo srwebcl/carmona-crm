@@ -99,8 +99,8 @@ function UserRow({ user, onEdit }: UserRowProps) {
                     </p>
                 </div>
             </td>
-            <td className="p-4">
-                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold border border-slate-200">{user.role}</span>
+            <td className="p-4 max-w-[160px]">
+                <span className="inline-block max-w-full truncate align-middle bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold border border-slate-200" title={user.role}>{user.role}</span>
             </td>
             <td className="p-4">
                 <PillList items={user.brands as string[]} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100 whitespace-nowrap" />
@@ -295,7 +295,7 @@ export function TeamManagement({ users }: { users: User[] }) {
                             <th className="p-4 font-semibold">Rol</th>
                             <th className="p-4 font-semibold">Marcas a cargo</th>
                             <th className="p-4 font-semibold">Áreas a cargo</th>
-                            <th className="p-4 font-semibold">Sucursales a cargo</th>
+                            <th className="p-4 font-semibold">Sucursales</th>
                             <th className="p-4 font-semibold text-right pr-6">Acciones</th>
                         </tr>
                     </thead>

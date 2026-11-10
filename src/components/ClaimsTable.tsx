@@ -93,18 +93,17 @@ export function ClaimsTable({ claims }: { claims: ClaimWithAssignee[] }) {
                             return (
                                 <tr key={claim.id} className="hover:bg-slate-50/80 transition-colors group">
                                     <td className="p-4 pl-6">
-                                        <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md text-sm group-hover:bg-indigo-100 transition-colors">{claim.code}</span>
+                                        <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md text-sm whitespace-nowrap group-hover:bg-indigo-100 transition-colors">{claim.code}</span>
                                     </td>
                                     <td className="p-4 max-w-[220px]">
-                                        <p className="truncate text-sm" title={`${claim.customerName} · ${claim.email}`}>
-                                            <span className="font-bold text-slate-800">{claim.customerName}</span>{' '}
-                                            <span className="text-slate-400">· {claim.email}</span>
+                                        <p className="truncate text-sm font-bold text-slate-800" title={`${claim.customerName} · ${claim.email}`}>
+                                            {claim.customerName}
                                         </p>
                                     </td>
                                     <td className="p-4 text-sm font-semibold text-slate-700">{claim.area}</td>
                                     <td className="p-4 text-sm text-slate-600">{claim.branch}</td>
                                     <td className="p-4">
-                                        <span className={clsx('px-3 py-1.5 rounded-full text-xs font-bold border', getStatusStyle(claim.status))}>
+                                        <span className={clsx('px-3 py-1.5 rounded-full text-xs font-bold border whitespace-nowrap', getStatusStyle(claim.status))}>
                                             {statusLabel(claim.status)}
                                         </span>
                                     </td>
