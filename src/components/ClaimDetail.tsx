@@ -2,10 +2,10 @@
 
 import { useActionState, useRef, useState, useEffect, useTransition, type ChangeEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Send, User as UserIcon, Calendar, Phone, Mail, Car, MapPin, Tag, Paperclip, FileText, Clock, IdCard, Building2, CheckCircle2, Pencil, X } from 'lucide-react';
+import { Send, User as UserIcon, Calendar, Phone, Mail, Car, MapPin, Tag, Paperclip, FileText, Clock, IdCard, Building2, CheckCircle2, Pencil, X, Trash2 } from 'lucide-react';
 import clsx from 'clsx';
 import type { Attachment, Claim, ClaimHistory, User } from '@prisma/client';
-import { addHistoryEntry, changeClaimStatus, reassignClaim, type ClaimFormState } from '@/actions/claims';
+import { addHistoryEntry, changeClaimStatus, reassignClaim, deleteClaimAction, type ClaimFormState, type DeleteClaimState } from '@/actions/claims';
 import { STATUSES, RESOLUTION_TYPES, HISTORY_TYPES, CLOSED_STATUSES, channelLabel, historyTypeLabel } from '@/lib/constants';
 import { formatDate, formatDateTime, formatDateTimeLong } from '@/lib/formatDate';
 
@@ -32,8 +32,9 @@ function getStatusStyle(s: string) {
 }
 
 const initialState: ClaimFormState = {};
+const initialDeleteState: DeleteClaimState = {};
 
-export function ClaimDetail({ claim, users, canReassign }: { claim: ClaimWithRelations; users: User[]; canReassign: boolean }) {
+export function ClaimDetail({ claim, users, canReassign, canDelete }: { claim: ClaimWithRelations; users: User[]; canReassign: boolean; canDelete: boolean }) {
     const chatEndRef = useRef<HTMLDivElement>(null);
     const noteFormRef = useRef<HTMLFormElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,7 +45,14 @@ export function ClaimDetail({ claim, users, canReassign }: { claim: ClaimWithRel
     const [toast, setToast] = useState<string | null>(null);
     const [historyState, historyAction, historyPending] = useActionState(addHistoryEntry.bind(null, claim.id), initialState);
     const [statusState, statusAction, statusPending] = useActionState(changeClaimStatus.bind(null, claim.id), initialState);
+    const [deleteState, deleteFormAction, deletePending] = useActionState(deleteClaimAction, initialDeleteState);
     const [, startReassignTransition] = useTransition();
+
+    function handleDeleteSubmit(e: React.FormEvent<HTMLFormElement>) {
+        if (!window.confirm(`¿Eliminar el reclamo ${claim.code}? Esta acción no se puede deshacer.`)) {
+            e.preventDefault();
+        }
+    }
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,34 +152,51 @@ export function ClaimDetail({ claim, users, canReassign }: { claim: ClaimWithRel
                     </p>
                 </div>
 
-                <form id="claim-status-form" action={statusAction} className="flex flex-col items-end gap-2 bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                    <div className="flex flex-wrap items-center justify-end gap-3">
-                        <label className="text-sm font-bold text-slate-700">Estado:</label>
-                        <select
-                            name="status"
-                            value={pendingStatus}
-                            onChange={handleStatusChange}
-                            className="bg-slate-50 border-slate-200 rounded-lg text-sm font-semibold p-2 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
-                        >
-                            {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                        </select>
-                        {needsResolution ? (
-                            <button
-                                type="button"
-                                onClick={() => setShowResolutionModal(true)}
-                                className="flex items-center px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-bold rounded-lg hover:bg-emerald-100 transition-colors"
+                <div className="flex items-start gap-3">
+                    <form id="claim-status-form" action={statusAction} className="flex flex-col items-end gap-2 bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                        <div className="flex flex-wrap items-center justify-end gap-3">
+                            <label className="text-sm font-bold text-slate-700">Estado:</label>
+                            <select
+                                name="status"
+                                value={pendingStatus}
+                                onChange={handleStatusChange}
+                                className="bg-slate-50 border-slate-200 rounded-lg text-sm font-semibold p-2 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer"
                             >
-                                <Pencil size={14} className="mr-1.5" />
-                                {claim.resolutionNotes ? 'Editar Solución' : 'Completar Solución'}
+                                {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                            </select>
+                            {needsResolution ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowResolutionModal(true)}
+                                    className="flex items-center px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm font-bold rounded-lg hover:bg-emerald-100 transition-colors"
+                                >
+                                    <Pencil size={14} className="mr-1.5" />
+                                    {claim.resolutionNotes ? 'Editar Solución' : 'Completar Solución'}
+                                </button>
+                            ) : (
+                                <button type="submit" disabled={statusPending} className="px-3 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors">
+                                    Guardar
+                                </button>
+                            )}
+                        </div>
+                        {statusState.error && !showResolutionModal && <p className="text-xs text-red-600 font-medium">{statusState.error}</p>}
+                    </form>
+
+                    {canDelete && (
+                        <form action={deleteFormAction} onSubmit={handleDeleteSubmit} className="shrink-0">
+                            <input type="hidden" name="claimId" value={claim.id} />
+                            <button
+                                type="submit"
+                                disabled={deletePending}
+                                title="Eliminar reclamo"
+                                className="flex items-center justify-center w-11 h-11 bg-white border border-red-200 text-red-500 rounded-xl hover:bg-red-50 transition-colors shadow-sm disabled:opacity-50"
+                            >
+                                <Trash2 size={18} />
                             </button>
-                        ) : (
-                            <button type="submit" disabled={statusPending} className="px-3 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition-colors">
-                                Guardar
-                            </button>
-                        )}
-                    </div>
-                    {statusState.error && !showResolutionModal && <p className="text-xs text-red-600 font-medium">{statusState.error}</p>}
-                </form>
+                            {deleteState.error && <p className="text-xs text-red-600 font-medium mt-1.5 max-w-[150px] text-right">{deleteState.error}</p>}
+                        </form>
+                    )}
+                </div>
             </div>
 
             {showResolutionModal && createPortal(

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { canAccessClaim, hasFullAccess } from '@/lib/routing';
+import { canAccessClaim, hasFullAccess, isAdminUser } from '@/lib/routing';
 import { ClaimDetail } from '@/components/ClaimDetail';
 
 export default async function ClaimDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,5 +29,5 @@ export default async function ClaimDetailPage({ params }: { params: Promise<{ id
 
     const users = await prisma.user.findMany({ orderBy: { name: 'asc' } });
 
-    return <ClaimDetail claim={claim} users={users} canReassign={hasFullAccess(currentUser)} />;
+    return <ClaimDetail claim={claim} users={users} canReassign={hasFullAccess(currentUser)} canDelete={isAdminUser(currentUser)} />;
 }

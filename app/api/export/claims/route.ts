@@ -17,6 +17,7 @@ export async function GET(request: Request) {
         q: searchParams.get('q') ?? undefined,
         brand: searchParams.get('brand') ?? undefined,
         area: searchParams.get('area') ?? undefined,
+        status: searchParams.get('status') ?? undefined,
         assignedToId: searchParams.get('assignedToId') ?? undefined,
         from: searchParams.get('from') ?? undefined,
         to: searchParams.get('to') ?? undefined,

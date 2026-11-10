@@ -23,7 +23,7 @@ export function isUsedCarBrand(brand: string | null): boolean {
     return brand !== null && (USED_CAR_BRANDS as readonly string[]).includes(brand);
 }
 
-export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos'] as const;
+export const AREAS = ['Ventas', 'Servicio Técnico', 'Repuestos', 'Recursos Humanos', 'Desabolladura y Pintura', 'Transportes'] as const;
 
 export const BRANCHES = ['La Serena', 'Copiapó'] as const;
 

@@ -53,14 +53,47 @@ export function slaAlertEmail(params: { code: string; customerName: string; hour
     };
 }
 
-export function resolutionEmail(params: { code: string; customerName: string; resolutionLabel: string }) {
+/**
+ * Aviso de resolución al cliente — mismo diseño de marca que
+ * claimReceivedCustomerEmail (logo, colores), ahora incluyendo también el
+ * texto completo de la respuesta final, no solo su clasificación.
+ */
+export function resolutionEmail(params: {
+    code: string;
+    customerName: string;
+    resolutionLabel: string;
+    resolutionNotes: string;
+    logoUrl: string;
+}) {
     return {
         subject: `Resolución de tu reclamo ${params.code}`,
         html: `
-            <p>Hola ${params.customerName},</p>
-            <p>Te informamos que tu reclamo <strong>${params.code}</strong> ha sido resuelto.</p>
-            <p>Resultado: <strong>${params.resolutionLabel}</strong></p>
-            <p>Gracias por tu paciencia.</p>
+            <div style="font-family: Arial, Helvetica, sans-serif; max-width: 560px; margin: 0 auto; color: #1e293b;">
+                <div style="background-color: #0f172a; padding: 28px 32px; border-radius: 12px 12px 0 0; text-align: center;">
+                    <img src="${params.logoUrl}" alt="Carmona" width="160" style="display: block; margin: 0 auto;" />
+                </div>
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px; padding: 32px;">
+                    <p style="font-size: 16px; margin-top: 0;">Hola ${params.customerName},</p>
+                    <p style="font-size: 15px; line-height: 1.5;">
+                        Te informamos que tu reclamo quedó resuelto. A continuación el detalle de nuestra respuesta.
+                    </p>
+                    <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 14px;">
+                        <tr>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;">Código de seguimiento</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; text-align: right;">${params.code}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;">Resultado</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; font-weight: bold; text-align: right;">${params.resolutionLabel}</td>
+                        </tr>
+                    </table>
+                    <p style="font-size: 14px; color: #64748b; margin-bottom: 4px;">Respuesta final:</p>
+                    <p style="font-size: 14px; background-color: #f8fafc; border-radius: 8px; padding: 14px; margin-top: 0;">${params.resolutionNotes.replace(/\n/g, '<br>')}</p>
+                    <p style="font-size: 13px; color: #94a3b8; margin-top: 28px; margin-bottom: 0;">
+                        Gracias por tu paciencia. Si tienes dudas sobre esta respuesta, puedes contactarnos respondiendo este correo.
+                    </p>
+                </div>
+            </div>
         `,
     };
 }

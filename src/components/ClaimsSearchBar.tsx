@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { Search, Filter, X } from 'lucide-react';
-import { BRANDS, AREAS } from '@/lib/constants';
+import { BRANDS, AREAS, STATUSES } from '@/lib/constants';
 
 interface ResponsableOption {
     id: number;
@@ -26,7 +26,7 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
 
     const [q, setQ] = useState(searchParams.get('q') ?? '');
     const [showFilters, setShowFilters] = useState(
-        Boolean(searchParams.get('brand') || searchParams.get('area') || searchParams.get('assignedToId') || searchParams.get('from') || searchParams.get('to')),
+        Boolean(searchParams.get('brand') || searchParams.get('area') || searchParams.get('status') || searchParams.get('assignedToId') || searchParams.get('from') || searchParams.get('to')),
     );
 
     function updateParam(name: string, value: string) {
@@ -42,7 +42,7 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
     }
 
     const hasFilters = Boolean(
-        searchParams.get('q') || searchParams.get('brand') || searchParams.get('area') || searchParams.get('assignedToId') || searchParams.get('from') || searchParams.get('to'),
+        searchParams.get('q') || searchParams.get('brand') || searchParams.get('area') || searchParams.get('status') || searchParams.get('assignedToId') || searchParams.get('from') || searchParams.get('to'),
     );
 
     return (
@@ -82,13 +82,13 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
             </div>
 
             {showFilters && (
-                <div className="flex flex-wrap gap-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1">Marca</label>
                         <select
                             defaultValue={searchParams.get('brand') ?? ''}
                             onChange={(e) => updateParam('brand', e.target.value)}
-                            className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
                         >
                             <option value="">Todas</option>
                             {BRANDS.map((b) => <option key={b} value={b}>{b}</option>)}
@@ -99,10 +99,21 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                         <select
                             defaultValue={searchParams.get('area') ?? ''}
                             onChange={(e) => updateParam('area', e.target.value)}
-                            className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
                         >
                             <option value="">Todas</option>
                             {AREAS.map((a) => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1">Estado</label>
+                        <select
+                            defaultValue={searchParams.get('status') ?? ''}
+                            onChange={(e) => updateParam('status', e.target.value)}
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                        >
+                            <option value="">Todos</option>
+                            {STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                         </select>
                     </div>
                     {showResponsable && (
@@ -111,7 +122,7 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                             <select
                                 defaultValue={searchParams.get('assignedToId') ?? ''}
                                 onChange={(e) => updateParam('assignedToId', e.target.value)}
-                                className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                                className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
                             >
                                 <option value="">Todos</option>
                                 {responsables.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -124,7 +135,7 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                             type="date"
                             defaultValue={searchParams.get('from') ?? ''}
                             onChange={(e) => updateParam('from', e.target.value)}
-                            className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
                         />
                     </div>
                     <div>
@@ -133,7 +144,7 @@ export function ClaimsSearchBar({ responsables = [], showResponsable = false }: 
                             type="date"
                             defaultValue={searchParams.get('to') ?? ''}
                             onChange={(e) => updateParam('to', e.target.value)}
-                            className="p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
+                            className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none"
                         />
                     </div>
                 </div>

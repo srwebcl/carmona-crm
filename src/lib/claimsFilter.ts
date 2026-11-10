@@ -12,6 +12,7 @@ export interface ClaimsFilterParams {
     q?: string;
     brand?: string;
     area?: string;
+    status?: string;
     assignedToId?: string;
     from?: string;
     to?: string;
@@ -29,11 +30,12 @@ function visibilityWhere(user: User): Prisma.ClaimWhereInput {
 }
 
 /** Arma el `where` de Prisma según el filtro y la visibilidad por rol/coincidencia (ver canAccessClaim). */
-export function buildClaimsWhere(currentUser: User, { q, brand, area, assignedToId, from, to }: ClaimsFilterParams): Prisma.ClaimWhereInput {
+export function buildClaimsWhere(currentUser: User, { q, brand, area, status, assignedToId, from, to }: ClaimsFilterParams): Prisma.ClaimWhereInput {
     const conditions: Prisma.ClaimWhereInput[] = [visibilityWhere(currentUser)];
 
     if (brand) conditions.push({ brand });
     if (area) conditions.push({ area });
+    if (status) conditions.push({ status });
     // El filtro por responsable solo lo puede usar quien ve todo (ver
     // ClaimsSearchBar) — para el resto su propia visibilidad ya viene acotada.
     if (assignedToId && hasFullAccess(currentUser)) conditions.push({ assignedToId: Number(assignedToId) });
@@ -85,6 +87,7 @@ export function buildClaimsQueryString(params: ClaimsFilterParams): string {
     if (params.q) qs.set('q', params.q);
     if (params.brand) qs.set('brand', params.brand);
     if (params.area) qs.set('area', params.area);
+    if (params.status) qs.set('status', params.status);
     if (params.assignedToId) qs.set('assignedToId', params.assignedToId);
     if (params.from) qs.set('from', params.from);
     if (params.to) qs.set('to', params.to);

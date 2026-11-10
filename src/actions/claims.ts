@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth';
-import { canAccessClaim, hasFullAccess } from '@/lib/routing';
+import { canAccessClaim, hasFullAccess, isAdminUser } from '@/lib/routing';
 import { collectFiles, saveUploadedFiles } from '@/lib/uploads';
 import { createClaim, attachFiles } from '@/lib/claimCreation';
 import { claimFieldsSchema, manualClaimSchema, historyEntrySchema, statusChangeSchema } from '@/lib/validation';
@@ -149,7 +149,14 @@ export async function changeClaimStatus(claimId: number, _prevState: ClaimFormSt
         // ya quedó guardado arriba) si el SMTP está mal configurado o no
         // responde — solo se deja registro del error.
         try {
-            const email = resolutionEmail({ code: claim.code, customerName: claim.customerName, resolutionLabel: resolutionLabel(resolutionType) ?? resolutionType });
+            const appUrl = process.env.APP_URL ?? 'http://localhost:3000';
+            const email = resolutionEmail({
+                code: claim.code,
+                customerName: claim.customerName,
+                resolutionLabel: resolutionLabel(resolutionType) ?? resolutionType,
+                resolutionNotes: resolutionNotes ?? claim.resolutionNotes ?? '',
+                logoUrl: `${appUrl}/logo-carmona-email.png`,
+            });
             await sendMail({ to: claim.email, subject: email.subject, html: email.html });
         } catch (err) {
             console.error(`[changeClaimStatus] no se pudo enviar el correo de resolución para ${claim.code}:`, err);
@@ -187,4 +194,22 @@ export async function reassignClaim(claimId: number, formData: FormData) {
     }
 
     revalidatePath(`/reclamos/${claimId}`);
+}
+
+export interface DeleteClaimState {
+    error?: string;
+}
+
+/** Elimina un reclamo completo (bitácora, adjuntos y alertas en cascada). Solo el admin del negocio puede hacerlo — no el desarrollador ni ningún perfil secundario. */
+export async function deleteClaimAction(_prevState: DeleteClaimState, formData: FormData): Promise<DeleteClaimState> {
+    const currentUser = await requireUser();
+    if (!isAdminUser(currentUser)) return { error: 'No tienes permiso para eliminar reclamos.' };
+
+    const claimId = Number(formData.get('claimId'));
+    if (!claimId) return { error: 'Reclamo inválido.' };
+
+    await prisma.claim.delete({ where: { id: claimId } });
+
+    revalidatePath('/reclamos');
+    redirect('/reclamos');
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Shield, Plus, X, Pencil, Trash2 } from 'lucide-react';
+import { Shield, Plus, X, Pencil, Trash2, Search } from 'lucide-react';
 import type { User } from '@prisma/client';
 import { createUserAction, updateUserAction, deleteUserAction, type UserFormState, type DeleteUserState } from '@/actions/users';
 import { BRANDS, AREAS, BRANCHES } from '@/lib/constants';
@@ -46,6 +46,31 @@ function ToggleGroup({ label, name, options, selected, onToggle, activeClassName
     );
 }
 
+/**
+ * Muestra como máximo 3 etiquetas y agrupa el resto en un "+N" con el detalle
+ * en el title — con 15+ marcas disponibles, listar todas las seleccionadas
+ * hacía que la fila de la tabla creciera a 2-3 líneas de alto por usuario.
+ */
+function PillList({ items, className }: { items: string[]; className: string }) {
+    const MAX_VISIBLE = 3;
+    const visible = items.slice(0, MAX_VISIBLE);
+    const restCount = items.length - visible.length;
+
+    return (
+        <div className="flex flex-wrap items-center gap-1">
+            {visible.map((item) => <span key={item} className={className}>{item}</span>)}
+            {restCount > 0 && (
+                <span
+                    title={items.slice(MAX_VISIBLE).join(', ')}
+                    className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200 font-semibold cursor-default shrink-0"
+                >
+                    +{restCount}
+                </span>
+            )}
+        </div>
+    );
+}
+
 interface UserRowProps {
     user: User;
     onEdit: () => void;
@@ -77,19 +102,13 @@ function UserRow({ user, onEdit }: UserRowProps) {
                 <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs font-bold border border-slate-200">{user.role}</span>
             </td>
             <td className="p-4">
-                <div className="flex flex-wrap gap-1">
-                    {(user.brands as string[]).map((b) => <span key={b} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100">{b}</span>)}
-                </div>
+                <PillList items={user.brands as string[]} className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-100 whitespace-nowrap" />
             </td>
             <td className="p-4">
-                <div className="flex flex-wrap gap-1">
-                    {(user.areas as string[]).map((a) => <span key={a} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-100">{a}</span>)}
-                </div>
+                <PillList items={user.areas as string[]} className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full border border-teal-100 whitespace-nowrap" />
             </td>
             <td className="p-4">
-                <div className="flex flex-wrap gap-1">
-                    {((user.branches as string[]) ?? []).map((b) => <span key={b} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100">{b}</span>)}
-                </div>
+                <PillList items={(user.branches as string[]) ?? []} className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-100 whitespace-nowrap" />
             </td>
             <td className="p-4 pr-6 text-right">
                 <div className="flex items-center justify-end gap-1">
@@ -111,6 +130,7 @@ function UserRow({ user, onEdit }: UserRowProps) {
 
 export function TeamManagement({ users }: { users: User[] }) {
     const searchParams = useSearchParams();
+    const [search, setSearch] = useState('');
     const [showForm, setShowForm] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -163,6 +183,12 @@ export function TeamManagement({ users }: { users: User[] }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
+    const filteredUsers = useMemo(() => {
+        const term = search.trim().toLowerCase();
+        if (!term) return users;
+        return users.filter((u) => u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term));
+    }, [users, search]);
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -174,9 +200,21 @@ export function TeamManagement({ users }: { users: User[] }) {
                     <p className="text-slate-500 text-sm mt-1">Crea, edita o elimina perfiles y define áreas de responsabilidad para el enrutamiento automático.</p>
                 </div>
                 {!showForm && (
-                    <button onClick={openCreateForm} className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md font-medium text-sm">
-                        <Plus size={18} className="mr-2" /> Nuevo Perfil
-                    </button>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                        <div className="relative group">
+                            <Search className="absolute left-3.5 top-2.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Buscar por nombre o correo..."
+                                className="pl-10 pr-4 py-2.5 w-full sm:w-64 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none text-sm transition-all shadow-sm"
+                            />
+                        </div>
+                        <button onClick={openCreateForm} className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md font-medium text-sm shrink-0">
+                            <Plus size={18} className="mr-2" /> Nuevo Perfil
+                        </button>
+                    </div>
                 )}
             </div>
 
@@ -261,9 +299,16 @@ export function TeamManagement({ users }: { users: User[] }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {users.map((u) => (
+                        {filteredUsers.map((u) => (
                             <UserRow key={u.id} user={u} onEdit={() => openEditForm(u)} />
                         ))}
+                        {filteredUsers.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="p-10 text-center text-sm text-slate-400">
+                                    No hay perfiles que coincidan con &ldquo;{search}&rdquo;.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
